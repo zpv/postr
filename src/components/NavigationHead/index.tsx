@@ -1,8 +1,7 @@
-const ProfileHeader = (props) => {
-    const { icon, public_key, display_name } = props;
+const NavigationHead = ({ icon, public_key, display_name }) => {
     return (
       <>
-        <div className="flex flex-row p-4 cursor-pointer">
+        <div className="flex flex-row p-4 cursor-pointer border-b border-gray-500">
             <img src={icon} className="rounded-lg h-12" />
             <div className="grid grid-rows-2 text-start gap-y-0 items-center">
                 {/* <h1 className="text-xl mx-2 truncate overflow-hidden">{display_name ? display_name : "no name"}</h1> */}
@@ -14,4 +13,4 @@ const ProfileHeader = (props) => {
     );
   };
   
-export default ProfileHeader;
+export default NavigationHead;

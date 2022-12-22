@@ -1,15 +1,23 @@
-const NavigationButton = (props) => {
-    const { name, icon } = props;
-    console.log("12312",icon)
+import Link from 'next/link';
+
+const NavigationButton = ({ name, icon, tab, setTab, href }) => {
+
+    const handleClick = () => {
+        setTab(name);
+    }
+    
     return (
       <>
-        <div className="cursor-pointer hover:bg-neutral-700 transition duration-100">
+        <div className={"cursor-pointer transition duration-200 border-indigo-600 " + (name === tab ? " bg-neutral-900 border-r" : " hover:bg-neutral-900")}
+            onClick={handleClick}>
+            <Link href={href}>
             <div className="flex flex-row px-4 py-4">
                 <img src={icon.src} className="h-7 align-middle" />
                 <div className="text-start gap-y-0 align-middle">
                     <h2 className="text-xl mx-2">{name}</h2>
                 </div>
             </div>
+            </Link>
         </div>
       </>
     );

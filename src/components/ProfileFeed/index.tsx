@@ -10,7 +10,6 @@ const ProfileFeed = () => {
       kinds: [Kind.TextNote, Kind.DirectMessage],
     },
   });
-  console.log(events);
   return (
     <>
       {events.map((event) => (
