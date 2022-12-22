@@ -13,7 +13,7 @@ Feed.getInitialProps = async (ctx) => {
 }
 
 function Feed({ user }) {
-  const [tab, setTab] = useState("Feed");
+  const tab = "Feed";
   const pageBody = (
     <>
       <p>feed2</p>
@@ -21,9 +21,9 @@ function Feed({ user }) {
   );
 
 
-    return (
-      <Layout {...user} {...{tab, setTab}} children={pageBody} />
-    );
-  }
-  
-  export default Feed;
+  return (
+    <Layout {...user} {...{tab}} children={pageBody} />
+  );
+}
+
+export default Feed;

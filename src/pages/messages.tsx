@@ -1,6 +1,5 @@
 import Layout from "../layouts/Layout";
 import { useState } from "react";
-import MessagesNav from "../components/MessagesNav";
 import MessagesLayout from "../layouts/MessagesLayout";
 
 Messages.getInitialProps = async (ctx) => {
@@ -15,7 +14,7 @@ Messages.getInitialProps = async (ctx) => {
 }
 
 function Messages({ user }) {
-  const [tab, setTab] = useState("Messages");
+  const tab = "Messages";
   const pageBody = (
     <>
       <MessagesLayout />
@@ -24,7 +23,7 @@ function Messages({ user }) {
 
 
   return (
-    <Layout {...user} {...{tab, setTab}} children={pageBody} />
+    <Layout {...user} {...{tab}} children={pageBody} />
   );
 }
 

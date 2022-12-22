@@ -16,13 +16,13 @@ const buttons = [
   },
 ]
 
-const Navigation = ({ icon, display_name, public_key, tab, setTab }) => {
+const Navigation = ({ icon, display_name, public_key, tab }) => {
   return (
     <>
         <div className="bg-black border-gray-600 border-r w-[200px] h-[100vh]">
             <NavigationHead {...{icon, public_key, display_name}}/>
             {buttons.map((button) => (
-                <NavigationButton {...button} {...{setTab, tab}}/>
+                <NavigationButton {...button} {...{tab}}/>
             ))}
         </div>
     </>
