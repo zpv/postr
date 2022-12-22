@@ -141,7 +141,7 @@ pub fn user_dms(peer: &str, privkey: &str, pool: tauri::State<SqlitePool>) -> Re
         }
 
         debug!("result: {:?}", result);
-
+        result.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
         Ok(result)
     } else {
         Err("no user".to_string())
