@@ -53,10 +53,10 @@ fn greet(name: &str, pool: tauri::State<SqlitePool>) -> String {
 
 struct UserProfile {
     pubkey: String,
-    name: String,
-    picture: String,
-    about: String,
-    nip05: String,
+    name: Option<String>,
+    picture: Option<String>,
+    about: Option<String>,
+    nip05: Option<String>,
     is_current: bool,
     created_at: i64,
     first_seen: i64
