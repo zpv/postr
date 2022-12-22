@@ -17,8 +17,23 @@ tauri-build = { version = "1.2", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.2", features = ["shell-open"] }
-tokio = { version = "0.2", features = ["full"] }
+tracing = "0.1.36"
+rusqlite = { version = "0.26", features = ["limits","bundled"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.19"
+tokio = { version = "1", features = ["full", "tracing", "signal"] }
 websocket = "0.22.0"
+const_format = "0.2.28"
+tungstenite = "0.17"
+thiserror = "1"
+lazy_static = "1.4"
+bitcoin_hashes = { version = "0.10", features = ["serde"] }
+rand = "0.8"
+secp256k1 = {version = "0.21", features = ["rand", "rand-std", "serde", "bitcoin_hashes"] }
+regex = "1"
+console-subscriber = "0.1.8"
+tracing-subscriber = "0.2.0"
+hex = "0.4"
 
 [features]
 # by default Tauri runs in production mode
