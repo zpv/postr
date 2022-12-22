@@ -1,18 +1,15 @@
 import Layout from "../layouts/Layout";
 import { useState } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 Feed.getInitialProps = async (ctx) => {
-  // const res = await fetch('https://api.github.com/repos/vercel/next.js')
-  // const json = await res.json()
-  const user = {
-    public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-    icon: "https://avatars.githubusercontent.com/u/12267041?v=4",
-    display_name: "",
-  }
-  return { user }
+  const pubkey = "6a0e6b709fb5239a3df637695764f153e56edccd48fa1c64916b8481d0ca3ab3";
+  const user_profile = await invoke("user_profile", { pubkey });
+
+  return { user_profile };
 }
 
-function Feed({ user }) {
+function Feed({ user_profile }) {
   const tab = "Feed";
   const pageBody = (
     <>
@@ -22,7 +19,9 @@ function Feed({ user }) {
 
 
   return (
-    <Layout {...user} {...{tab}} children={pageBody} />
+    <Layout {...{user_profile}} {...{tab}}>
+      {pageBody}
+    </Layout>
   );
 }
 

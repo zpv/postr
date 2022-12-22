@@ -1,85 +1,26 @@
+import MessagesNavHead from "../MessagesNavHead";
 import MessagesNavListItem from "../MessagesNavListItem";
 
-const MessagesNavList = () => {
-    
-    const users = [
-        {
-            id: 1,
-            icon: "https://avatars.githubusercontent.com/u/71356404?v=4",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-07-01T00:00:00.000Z",
-        },
-        {
-            id: 2,
-            icon: "https://avatars.githubusercontent.com/u/24833484?v=4",
-            display_name: "kelvin",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-06-04T00:00:00.000Z",
-        },
-        {
-            id: 2,
-            icon: "https://avatars.githubusercontent.com/u/24833484?v=4",
-            display_name: "kelvin",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-06-04T00:00:00.000Z",
-        },
-        {
-            id: 2,
-            icon: "https://avatars.githubusercontent.com/u/24833484?v=4",
-            display_name: "kelvin",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-06-04T00:00:00.000Z",
-        },
-        {
-            id: 2,
-            icon: "https://avatars.githubusercontent.com/u/24833484?v=4",
-            display_name: "kelvin",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-06-04T00:00:00.000Z",
-        },
-        {
-            id: 2,
-            icon: "https://avatars.githubusercontent.com/u/24833484?v=4",
-            display_name: "kelvin",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-06-04T00:00:00.000Z",
-        },
-        {
-            id: 2,
-            icon: "https://avatars.githubusercontent.com/u/24833484?v=4",
-            display_name: "kelvin",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-06-04T00:00:00.000Z",
-        },
-        {
-            id: 2,
-            icon: "https://avatars.githubusercontent.com/u/24833484?v=4",
-            display_name: "kelvin",
-            public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-            last_message: "Hello",
-            last_message_time: "2021-06-04T00:00:00.000Z",
-        }
-    ]
+const MessagesNavList = ({ message_list, peer, setPeer }) => {
 
-    return (
-      <>
-        <div className="p-4">
-            <input type="text" placeholder="Search..." className="rounded-full w-full bg-gray-800 px-2"/>
-        </div>
-        <div className="overflow-scroll h-full border-r border-neutral-600">
-            {users.map((user) => (
-                <MessagesNavListItem key={user.id} {...user} />
-            ))}
-        </div>
-      </>
-    );
+  const handleClick = (pubkey) => {
+    setPeer(pubkey);
   };
   
+  return (
+    <>
+      <div className="p-3">
+          <input type="text" placeholder="Search..." className="rounded-sm w-full bg-neutral-800 px-2"/>
+      </div>
+      <div className="overflow-scroll h-full">
+          {message_list.map((user) => (
+              <div onClick={() => handleClick(user.public_key)} className={"p-3 flex flex-row border-indigo-600 cursor-pointer transition duration-100 " + (user.public_key === peer ? "bg-neutral-900 border-r-2" : "hover:bg-neutral-900")}>
+                <MessagesNavListItem key={user.id} {...user}/>
+              </div>
+          ))}
+      </div>
+    </>
+  );
+};
+
 export default MessagesNavList;

@@ -1,26 +1,27 @@
 import NavigationHead from "../NavigationHead";
 import NavigationButton from "../NavigationButton";
-import activity from "../../images/nav_activity.png";
-import message from "../../images/nav_message.png";
+import activity from "../../assets/nav_activity.png";
+import message from "../../assets/nav_message.png";
 
-const buttons = [
-  {
-    name: "Messages",
-    icon: message,
-    href: "/messages",
-  },
-  {
-    name: "Feed",
-    icon: activity,
-    href: "/feed",
-  },
-]
+const Navigation = ({ user_profile, tab }) => {
+  const { picture, name, pubkey } = user_profile;
+  const buttons = [
+    {
+      name: "Messages",
+      icon: message,
+      href: "/messages?pubkey=" + pubkey,
+    },
+    {
+      name: "Feed",
+      icon: activity,
+      href: "/feed?pubkey=" + pubkey,
+    },
+  ]
 
-const Navigation = ({ icon, display_name, public_key, tab }) => {
   return (
     <>
-        <div className="bg-black border-gray-600 border-r w-[200px] h-[100vh]">
-            <NavigationHead {...{icon, public_key, display_name}}/>
+        <div className="bg-black border-gray-600 border-r h-[100vh]">
+            <NavigationHead {...{picture, pubkey, name}}/>
             {buttons.map((button) => (
                 <NavigationButton {...button} {...{tab}}/>
             ))}

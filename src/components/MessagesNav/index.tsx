@@ -1,13 +1,12 @@
 import MessagesNavHead from "../MessagesNavHead";
 import MessagesNavList from "../MessagesNavList";
 
-const MessagesNav = () => {
-    
+const MessagesNav = ({ message_list, peer, setPeer }) => {
     return (
       <>
-        <div className="w-[300px] h-[100vh] grid row-span-3 bg-black border-gray-600 border-r">
+        <div style={{ gridTemplateRows: "min-content min-content 1fr" }} className="grid h-[100vh] bg-black border-neutral-600 border-r">
             <MessagesNavHead/>
-            <MessagesNavList/>
+            <MessagesNavList {...{message_list, peer, setPeer}}/>
         </div>
       </>
     );
