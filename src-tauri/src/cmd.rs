@@ -34,7 +34,7 @@ pub struct UserProfile {
 pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>) -> Result<UserProfile, String> {
     // get user profile from pubkey
     if let Ok(conn) = pool.get() {
-        let mut statement = conn.prepare("SELECT * FROM users WHERE pubkey = ?").unwrap();
+        let mut statement = conn.prepare("SELECT * FROM users WHERE pubkey = ? AND is_current").unwrap();
         let mut users = statement.query_map([pubkey], |row| {
             Ok(
                 UserProfile {
@@ -59,11 +59,6 @@ pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>) -> Result<User
     } else {
         Err("no user".to_string())
     }
-}
-
-pub struct UserChat {
-    peer: String,
-    last_message: Option<String>,
 }
 
 #[command]
@@ -151,4 +146,11 @@ pub fn user_dms(peer: &str, privkey: &str, pool: tauri::State<SqlitePool>) -> Re
     } else {
         Err("no user".to_string())
     }
+}
+
+
+#[command]
+pub fn to_pubkey(privkey: &str) -> Result<String, String> {
+    let identity = Identity::from_str(privkey).unwrap();
+    Ok(identity.public_key_str)
 }
