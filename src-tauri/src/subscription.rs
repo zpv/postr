@@ -2,7 +2,8 @@
 use crate::error::Result;
 use crate::event::Event;
 use serde::de::Unexpected;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::ser::SerializeMap;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -19,7 +20,7 @@ pub struct Subscription {
 /// Corresponds to client-provided subscription request elements.  Any
 /// element can be present if it should be used in filtering, or
 /// absent ([`None`]) if it should be ignored.
-#[derive(Serialize, PartialEq, Eq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct ReqFilter {
     /// Event hashes
     pub ids: Option<Vec<String>>,
@@ -34,7 +35,6 @@ pub struct ReqFilter {
     /// Limit number of results
     pub limit: Option<u64>,
     /// Set of tags
-    #[serde(skip)]
     pub tags: Option<HashMap<char, HashSet<String>>>,
     /// Force no matches due to malformed data
     // we can't represent it in the req filter, so we don't want to
@@ -42,6 +42,41 @@ pub struct ReqFilter {
     // do something invalid.
     pub force_no_match: bool,
 }
+
+impl Serialize for ReqFilter {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // tags are a special case, since they are a map of chars to a set of string
+        // in the serialized JSON, each char should be a key called `\#{char}` and the value should be the set of strings 
+
+        let mut map = serializer.serialize_map(Some(8))?;
+        if let Some(ids) = &self.ids {
+            map.serialize_entry("ids", ids)?;
+        }
+        if let Some(kinds) = &self.kinds {
+            map.serialize_entry("kinds", kinds)?;
+        }
+        if let Some(since) = &self.since {
+            map.serialize_entry("since", since)?;
+        }
+        if let Some(until) = &self.until {
+            map.serialize_entry("until", until)?;
+        }
+        if let Some(authors) = &self.authors {
+            map.serialize_entry("authors", authors)?;
+        }
+        if let Some(limit) = &self.limit {
+            map.serialize_entry("limit", limit)?;
+        }
+        if let Some(tags) = &self.tags {
+            for (k, v) in tags {
+                map.serialize_entry(&format!("#{}", k), v)?;
+            }
+        }
+        map.serialize_entry("force_no_match", &self.force_no_match)?;
+        map.end()
+    }
+}
+
 
 impl<'de> Deserialize<'de> for ReqFilter {
     fn deserialize<D>(deserializer: D) -> Result<ReqFilter, D::Error>

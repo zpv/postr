@@ -161,6 +161,16 @@ pub fn write_event(conn: &mut PooledConnection, e: &Event) -> Result<usize> {
     let pubkey_blob: Option<Vec<u8>> = hex::decode(&e.pubkey).ok();
     let delegator_blob: Option<Vec<u8>> = e.delegated_by.as_ref().and_then(|d| hex::decode(d).ok());
     let event_str = serde_json::to_string(&e).ok();
+
+    // validate content is valid JSON if kind == 0. return Ok(0) if not.
+    if e.kind == 0 {
+        if let Err(err) = serde_json::from_str::<serde_json::Value>(&e.content) {
+            warn!("invalid JSON in event: {:?}", err);
+            tx.rollback().ok();
+            return Ok(0);
+        }
+    }
+
     // ignore if the event hash is a duplicate.
     let mut ins_count = tx.execute(
 			"INSERT OR IGNORE INTO event (event_hash, created_at, kind, author, pubkey, delegated_by, raw_event, content, first_seen, hidden) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, strftime('%s','now'), FALSE);",
