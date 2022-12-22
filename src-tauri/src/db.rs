@@ -1,6 +1,9 @@
 use crate::error::{Error, Result};
 use crate::event::{self, single_char_tagname, Event};
+use crate::subscription::{ReqFilter, Subscription};
 use crate::notice::Notice;
+use crate::hexrange::hex_range;
+use crate::hexrange::HexSearch;
 use crate::schema::{upgrade_db, STARTUP_SQL};
 use crate::utils::{is_hex, is_lower_hex};
 use hex;
@@ -124,7 +127,6 @@ pub async fn db_writer(
             }
 
             let event = next_event.unwrap();
-            info!("got event {:?}", event);
 
             let start = Instant::now();
             match write_event(&mut pool.get()?, &event) {
@@ -264,6 +266,163 @@ pub fn write_event(conn: &mut PooledConnection, e: &Event) -> Result<usize> {
     Ok(ins_count)
 }
 
+/// Create a dynamic SQL subquery and params from a subscription filter.
+fn query_from_filter(f: &ReqFilter) -> (String, Vec<Box<dyn ToSql>>) {
+    // build a dynamic SQL query.  all user-input is either an integer
+    // (sqli-safe), or a string that is filtered to only contain
+    // hexadecimal characters.  Strings that require escaping (tag
+    // names/values) use parameters.
+
+    // if the filter is malformed, don't return anything.
+    if f.force_no_match {
+        let empty_query = "SELECT e.raw_event, e.created_at FROM event e WHERE 1=0".to_owned();
+        // query parameters for SQLite
+        let empty_params: Vec<Box<dyn ToSql>> = vec![];
+        return (empty_query, empty_params);
+    }
+
+    let mut query = "SELECT e.raw_event, e.created_at FROM event e".to_owned();
+    // query parameters for SQLite
+    let mut params: Vec<Box<dyn ToSql>> = vec![];
+
+    // individual filter components (single conditions such as an author or event ID)
+    let mut filter_components: Vec<String> = Vec::new();
+    // Query for "authors", allowing prefix matches
+    if let Some(authvec) = &f.authors {
+        // take each author and convert to a hexsearch
+        let mut auth_searches: Vec<String> = vec![];
+        for auth in authvec {
+            match hex_range(auth) {
+                Some(HexSearch::Exact(ex)) => {
+                    debug!("Exact author search: {:?}", ex);
+                    auth_searches.push("author=? OR delegated_by=?".to_owned());
+                    params.push(Box::new(ex.clone()));
+                    params.push(Box::new(ex));
+                }
+                Some(HexSearch::Range(lower, upper)) => {
+                    auth_searches.push(
+                        "(author>? AND author<?) OR (delegated_by>? AND delegated_by<?)".to_owned(),
+                    );
+                    params.push(Box::new(lower.clone()));
+                    params.push(Box::new(upper.clone()));
+                    params.push(Box::new(lower));
+                    params.push(Box::new(upper));
+                }
+                Some(HexSearch::LowerOnly(lower)) => {
+                    auth_searches.push("author>? OR delegated_by>?".to_owned());
+                    params.push(Box::new(lower.clone()));
+                    params.push(Box::new(lower));
+                }
+                None => {
+                    info!("Could not parse hex range from author {:?}", auth);
+                }
+            }
+        }
+        if !authvec.is_empty() {
+            let authors_clause = format!("({})", auth_searches.join(" OR "));
+            filter_components.push(authors_clause);
+        } else {
+            // if the authors list was empty, we should never return
+            // any results.
+            filter_components.push("false".to_owned());
+        }
+    }
+    // Query for Kind
+    if let Some(ks) = &f.kinds {
+        // kind is number, no escaping needed
+        let str_kinds: Vec<String> = ks.iter().map(|x| x.to_string()).collect();
+        let kind_clause = format!("kind IN ({})", str_kinds.join(", "));
+        filter_components.push(kind_clause);
+    }
+    // Query for event, allowing prefix matches
+    if let Some(idvec) = &f.ids {
+        // take each author and convert to a hexsearch
+        let mut id_searches: Vec<String> = vec![];
+        for id in idvec {
+            match hex_range(id) {
+                Some(HexSearch::Exact(ex)) => {
+                    id_searches.push("event_hash=?".to_owned());
+                    params.push(Box::new(ex));
+                }
+                Some(HexSearch::Range(lower, upper)) => {
+                    id_searches.push("(event_hash>? AND event_hash<?)".to_owned());
+                    params.push(Box::new(lower));
+                    params.push(Box::new(upper));
+                }
+                Some(HexSearch::LowerOnly(lower)) => {
+                    id_searches.push("event_hash>?".to_owned());
+                    params.push(Box::new(lower));
+                }
+                None => {
+                    info!("Could not parse hex range from id {:?}", id);
+                }
+            }
+        }
+        if !idvec.is_empty() {
+            let id_clause = format!("({})", id_searches.join(" OR "));
+            filter_components.push(id_clause);
+        } else {
+            // if the ids list was empty, we should never return
+            // any results.
+            filter_components.push("false".to_owned());
+        }
+    }
+    // Query for tags
+    if let Some(map) = &f.tags {
+        for (key, val) in map.iter() {
+            let mut str_vals: Vec<Box<dyn ToSql>> = vec![];
+            let mut blob_vals: Vec<Box<dyn ToSql>> = vec![];
+            for v in val {
+                if (v.len() % 2 == 0) && is_lower_hex(v) {
+                    if let Ok(h) = hex::decode(v) {
+                        blob_vals.push(Box::new(h));
+                    }
+                } else {
+                    str_vals.push(Box::new(v.to_owned()));
+                }
+            }
+            // create clauses with "?" params for each tag value being searched
+            let str_clause = format!("value IN ({})", repeat_vars(str_vals.len()));
+            let blob_clause = format!("value_hex IN ({})", repeat_vars(blob_vals.len()));
+            // find evidence of the target tag name/value existing for this event.
+            let tag_clause = format!("e.id IN (SELECT e.id FROM event e LEFT JOIN tag t on e.id=t.event_id WHERE hidden!=TRUE and (name=? AND ({} OR {})))", str_clause, blob_clause);
+            // add the tag name as the first parameter
+            params.push(Box::new(key.to_string()));
+            // add all tag values that are plain strings as params
+            params.append(&mut str_vals);
+            // add all tag values that are blobs as params
+            params.append(&mut blob_vals);
+            filter_components.push(tag_clause);
+        }
+    }
+    // Query for timestamp
+    if f.since.is_some() {
+        let created_clause = format!("created_at > {}", f.since.unwrap());
+        filter_components.push(created_clause);
+    }
+    // Query for timestamp
+    if f.until.is_some() {
+        let until_clause = format!("created_at < {}", f.until.unwrap());
+        filter_components.push(until_clause);
+    }
+    // never display hidden events
+    query.push_str(" WHERE hidden!=TRUE");
+    // build filter component conditions
+    if !filter_components.is_empty() {
+        query.push_str(" AND ");
+        query.push_str(&filter_components.join(" AND "));
+    }
+    // Apply per-filter limit to this subquery.
+    // The use of a LIMIT implies a DESC order, to capture only the most recent events.
+    if let Some(lim) = f.limit {
+        let _ = write!(query, " ORDER BY e.created_at DESC LIMIT {}", lim);
+    } else {
+        query.push_str(" ORDER BY e.created_at ASC")
+    }
+    (query, params)
+}
+
+
 /// Produce a arbitrary list of '?' parameters.
 fn repeat_vars(count: usize) -> String {
     if count == 0 {
@@ -273,4 +432,26 @@ fn repeat_vars(count: usize) -> String {
     // Remove trailing comma
     s.pop();
     s
+}
+
+/// Create a dynamic SQL query string and params from a subscription.
+pub fn query_from_sub(sub: &Subscription) -> (String, Vec<Box<dyn ToSql>>) {
+    // build a dynamic SQL query for an entire subscription, based on
+    // SQL subqueries for filters.
+    let mut subqueries: Vec<String> = Vec::new();
+    // subquery params
+    let mut params: Vec<Box<dyn ToSql>> = vec![];
+    // for every filter in the subscription, generate a subquery
+    for f in sub.filters.iter() {
+        let (f_subquery, mut f_params) = query_from_filter(f);
+        subqueries.push(f_subquery);
+        params.append(&mut f_params);
+    }
+    // encapsulate subqueries into select statements
+    let subqueries_selects: Vec<String> = subqueries
+        .iter()
+        .map(|s| format!("SELECT distinct raw_event, created_at FROM ({})", s))
+        .collect();
+    let query: String = subqueries_selects.join(" UNION ");
+    (query, params)
 }

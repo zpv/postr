@@ -3,7 +3,8 @@ extern crate tokio;
 
 use postr::db::{self, SqlitePool};
 use postr::event::Event;
-use postr::socket;
+use postr::{socket, __cmd__user_profile, __cmd__user_dms};
+use postr::cmd::{user_profile, user_dms};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use serde::{Deserialize, Serialize};
@@ -20,6 +21,8 @@ use tokio::sync::broadcast::{self, Receiver, Sender};
 use tokio::sync::mpsc;
 use tokio::sync::oneshot;
 use tracing::*;
+
+use tauri::Manager;
 
 use console_subscriber::ConsoleLayer;
 
@@ -49,50 +52,6 @@ fn greet(name: &str, pool: tauri::State<SqlitePool>) -> String {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-
-struct UserProfile {
-    pubkey: String,
-    name: Option<String>,
-    picture: Option<String>,
-    about: Option<String>,
-    nip05: Option<String>,
-    is_current: bool,
-    created_at: i64,
-    first_seen: i64
-}
-
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>) -> Result<UserProfile, String> {
-    // get user profile from pubkey
-    if let Ok(conn) = pool.get() {
-        let mut statement = conn.prepare("SELECT * FROM users WHERE pubkey = ?").unwrap();
-        let mut users = statement.query_map([pubkey], |row| {
-            Ok(
-                UserProfile {
-                    pubkey: row.get(0)?,
-                    name: row.get(1)?,
-                    picture: row.get(2)?,
-                    about: row.get(3)?,
-                    nip05: row.get(4)?,
-                    is_current: row.get(5)?,
-                    created_at: row.get(6)?,
-                    first_seen: row.get(7)?
-                }
-            )
-        }).unwrap();
-
-
-        if let Some(user) = users.next() {
-            Ok(user.unwrap())
-        } else {
-            Err("no user".to_string())
-        }
-    } else {
-        Err("no user".to_string())
-    }
-}
 
 pub fn init_app_config_path() {
     let home_dir = tauri::api::path::home_dir();
@@ -167,9 +126,16 @@ fn main() {
         )
         .await;
         info!("db writer created");
-        tokio::spawn(async move {
-            socket::connect(event_tx).await;
-        });
+
+        let relays = vec!["wss://satstacker.cloud", "wss://relay.damus.io", "wss://relay.nostr.info"];
+        // spawn a task for each relay
+        for relay in relays {
+            let event_tx = event_tx.clone();
+            let mut relay = socket::RelaySocket::new(relay.to_string(), event_tx);
+            let tx = relay.connect();
+            
+            std::thread::sleep(std::time::Duration::from_millis(1000));
+        }
 
         let pool = db::build_pool(
             "client query",
@@ -181,8 +147,10 @@ fn main() {
 
         tauri::Builder::default()
             .manage(pool)
-            .invoke_handler(tauri::generate_handler![greet])
-            .invoke_handler(tauri::generate_handler![user_profile])
+            .invoke_handler(tauri::generate_handler![
+                user_profile,
+                user_dms
+            ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");
     });

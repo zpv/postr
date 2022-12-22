@@ -14,6 +14,7 @@ rust-version = "1.57"
 tauri-build = { version = "1.2", features = [] }
 
 [dependencies]
+nostr_rust = "0.15.0"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "1.2", features = ["shell-open"] }
@@ -29,11 +30,15 @@ thiserror = "1"
 lazy_static = "1.4"
 bitcoin_hashes = { version = "0.10", features = ["serde"] }
 rand = "0.8"
-secp256k1 = {version = "0.21", features = ["rand", "rand-std", "serde", "bitcoin_hashes"] }
+secp256k1 = { version = "0.25", features = ["bitcoin_hashes", "global-context", "rand-std", "rand"] }
 regex = "1"
 console-subscriber = "0.1.8"
 tracing-subscriber = "0.2.0"
 hex = "0.4"
+tokio-tungstenite = {version="0.18.0", features = ["native-tls"] }
+url = "2.3.1"
+futures-util = "0.3.25"
+mio = "0.8.5"
 
 [features]
 # by default Tauri runs in production mode
