@@ -6,9 +6,13 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use nostr_rust::Identity;
+use nostr_rust::events::EventPrepare;
 use nostr_rust::nips::nip4::PrivateMessage;
 use nostr_rust::nips::nip4::decrypt;
+use nostr_rust::nips::nip4::encrypt;
+use nostr_rust::utils::get_timestamp;
 use rusqlite::ToSql;
+use serde_json::json;
 use tauri::Manager;
 use tokio::sync::broadcast;
 use crate::db::SqlitePool;
@@ -352,6 +356,30 @@ pub async fn sub_to_msg_events(privkey: &str, bcast_tx: tauri::State<'_, broadca
             debug!("matches");
         }
     }
+
+    Ok(())
+}
+
+
+#[command]
+pub fn send_dm(privkey: &str, peer: &str, message: &str, relay_pool: tauri::State<Arc<Mutex<RelayPool>>> ) -> Result<(), ()> {
+    let identity = Identity::from_str(privkey).unwrap();
+
+    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
+    let encrypted_message = encrypt(&identity.secret_key, &x_pub_key, message).unwrap();
+
+    let event = EventPrepare {
+        pub_key: identity.public_key_str.clone(),
+        created_at: get_timestamp(),
+        kind: 4,
+        tags: vec![vec!["p".to_string(), peer.to_string()]],
+        content: encrypted_message,
+    }
+    .to_event(&identity, 0);
+
+    let json_stringified = json!(["EVENT", event]).to_string();
+
+    relay_pool.lock().unwrap().send(json_stringified);
 
     Ok(())
 }
