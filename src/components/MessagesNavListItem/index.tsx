@@ -31,7 +31,7 @@ const MessagesNavListItem = ({ pubkey, last_message, picture, name }) => {
   const display = name || (pubkey && pubkey.slice(0, 6)) || "";
   const [isHovering, setIsHovering] = useState(false);
 
-  // last_message is a temporarily a unix timestamp
+  // last_message is a temporarily? a unix timestamp
   last_message = getFormattedTime(last_message);
 
   function handleMouseOver() {

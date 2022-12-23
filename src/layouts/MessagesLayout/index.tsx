@@ -18,25 +18,29 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
     return await invoke("user_convos");
   };
 
+  const getProfile = async (pubkey) => {
+    return await invoke("user_profile", {
+      pubkey: pubkey,
+    })
+      .then((r: any) => {
+        if (!r.picture) {
+          r.picture = `https://robohash.org/${pubkey}.png`;
+        }
+        return r;
+      })
+      .catch((e) => {
+        console.log(`getProfile error (${e}) for: `, pubkey);
+        return {
+          picture: `https://robohash.org/${pubkey}.png`,
+          pubkey: pubkey,
+        };
+      });
+  };
+
   const getProfiles = async (messages) => {
     const profiles = {};
     for (const message of messages) {
-      try {
-        const profile: any = await invoke("user_profile", {
-          pubkey: message.peer,
-        });
-        if (!profile.picture) {
-          profile.picture = `https://robohash.org/${message.peer}.png`;
-        }
-        profiles[message.peer] = profile;
-      } catch {
-        console.log("failed to get profile for ", message.peer);
-
-        profiles[message.peer] = {
-          picture: `https://robohash.org/${message.peer}.png`,
-          pubkey: message.peer,
-        };
-      }
+      profiles[message.peer] = await getProfile(message.peer);
     }
     return profiles;
   };
@@ -61,22 +65,13 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
         console.log(e);
       });
 
-  function removeItem<T>(arr: Array<T>, value: T): Array<T> {
-    const index = arr.indexOf(value);
-    if (index > -1) {
-      arr.splice(index, 1);
-    }
-    return arr;
-  }
-
   useEffect(() => {
     const unlisten = listen("dm", (event: any) => {
-      // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
-      // event.payload is the payload object
-      // refreshMessages();
-      console.log(event);
-      console.log("PEER", peer)
-      console.log("AUTHOR", event.payload.author)
+      // console.log(event);
+      // console.log("PEER", peer);
+      // console.log("AUTHOR", event.payload.author);
+
+      // if message is for this peer, add it to the conversation
       if (
         peer === event.payload.author ||
         (user_profile.pubkey === event.payload.author &&
@@ -84,6 +79,78 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
       ) {
         setConversation((prev) => [...prev, event.payload]);
       }
+
+      // everything below here is to update message list
+
+      // setup profile if it doesn't exist
+      const updatePeerProfile = (peer_pubkey) => {
+        const peer_profile = peer_profiles[peer_pubkey];
+        if (!peer_profile) {
+          getProfile(peer_pubkey).then((profile) => {
+            setPeerProfiles((prev_profiles) => {
+              prev_profiles[peer_pubkey] = profile;
+              return prev_profiles;
+            });
+          });
+        }
+      };
+
+      setMessageList((prev) => {
+        // handle case where author === recipient (i.e. sending to self)
+        if (event.payload.author === event.payload.recipient) {
+          const message = prev.find((m) => m.peer === event.payload.author);
+          if (message) {
+            message.last_message = Math.max(
+              message.last_message,
+              event.payload.timestamp
+            );
+            return [...prev].sort((a, b) => b.last_message - a.last_message);
+          } else {
+            const pubkey = event.payload.author;
+
+            updatePeerProfile(pubkey);
+
+            return [
+              ...prev,
+              {
+                peer: pubkey,
+                last_message: event.payload.timestamp,
+              },
+            ].sort((a, b) => b.last_message - a.last_message);
+          }
+        }
+
+        // handle case where author !== recipient
+        const message = prev.find(
+          (m) =>
+            (m.peer === event.payload.author ||
+              m.peer === event.payload.recipient) &&
+            m.peer !== user_profile.pubkey
+        );
+        if (message) {
+          message.last_message = Math.max(
+            message.last_message,
+            event.payload.timestamp
+          );
+          // updatePeerProfile(message.peer);
+          return [...prev].sort((a, b) => b.last_message - a.last_message);
+        } else {
+          const pubkey =
+            user_profile.pubkey === event.payload.author
+              ? event.payload.recipient
+              : event.payload.author;
+
+          updatePeerProfile(pubkey);
+
+          return [
+            ...prev,
+            {
+              peer: pubkey,
+              last_message: event.payload.timestamp,
+            },
+          ].sort((a, b) => b.last_message - a.last_message);
+        }
+      });
     });
 
     refreshMessages();
@@ -95,7 +162,6 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
 
   useEffect(() => {
     setLoading(true);
-
     if (peer !== "") {
       const switchConversation = async () => {
         return await invoke("user_dms", { peer });
