@@ -46,7 +46,7 @@ pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>, relay_pool: ta
                 since: None,
                 until: None,
                 authors: Some([pubkey.to_string()].to_vec()),
-                limit: Some(100),
+                limit: Some(1),
                 tags: None,
                 force_no_match: false,
             }
