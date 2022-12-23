@@ -119,7 +119,6 @@ pub async fn db_writer(
                 break;
             }
 
-            info!("Getting next event");
             // call blocking read on channel
             let next_event = event_rx.blocking_recv();
 
@@ -133,9 +132,9 @@ pub async fn db_writer(
             match write_event(&mut pool.get()?, &event) {
                 Ok(updated) => {
                     if updated == 0 {
-                        info!("ignoring duplicate or deleted event");
+                        debug!("ignoring duplicate or deleted event");
                     } else {
-                        info!(
+                        debug!(
                             "persisted event: {:?} from: {:?} in: {:?}",
                             event.get_event_id_prefix(),
                             event.get_author_prefix(),

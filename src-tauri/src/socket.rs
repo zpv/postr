@@ -30,12 +30,23 @@ use console_subscriber::ConsoleLayer;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+/// Close command in network format
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
+pub struct EOSE {
+    /// Protocol command, expected to always be "EOSE".
+    cmd: String,
+    /// The subscription identifier.
+    id: String,
+}
+
 /// Nostr protocol messages from a client
 #[derive(Deserialize, Serialize, Clone, PartialEq, Eq, Debug)]
 #[serde(untagged)]
 pub enum NostrMessage {
     /// An `EVENT` message
     EventMsg(EventResp),
+    /// An `EOSE` message
+    EOSEMsg(EOSE),
 }
 
 pub struct RelaySocket {
@@ -87,8 +98,8 @@ impl RelaySocket {
 
         tokio::spawn(async move {
             loop {
-                let tx_close_2 = tx_clone.clone();
-                let mut rx2 = tx_close_2.subscribe();
+                let tx_clone_2 = tx_clone.clone();
+                let mut rx2 = tx_clone_2.subscribe();
                 let url = Url::parse(&relay).unwrap();
                 let (mut socket, _) = match connect_async(url).await {
                     Ok(s) => s,
@@ -116,6 +127,7 @@ impl RelaySocket {
                 // Create a channel to send messages to the server
                 let send_handler = tokio::spawn(async move {
                     while let Ok(msg) = &rx2.recv().await {
+                        info!("Sending message: {:?}", msg);
                         let msg = Message::Text(msg.to_string());
                         write.send(msg).await.unwrap();
                     }
@@ -151,7 +163,7 @@ impl RelaySocket {
 
                                                 if let Err(_) = &event_tx.send(e.clone()).await {
                                                         error!("receiver dropped");
-                                                        return;
+                                                        break;
                                                 }
                                             }
                                             Err(e) => {
@@ -159,6 +171,21 @@ impl RelaySocket {
                                             }
                                         }
                                     }
+                                    NostrMessage::EOSEMsg(eose) => {
+                                        info!("received EOSE message: {:?}", eose);
+                                        if eose.cmd != "EOSE" {
+                                            error!("received EOSE message with invalid command: {:?}", eose.cmd);
+                                            continue;
+                                        }
+
+                                        if eose.id == "cid" {
+                                            continue;
+                                        }
+
+                                        info!("sending CLOSE {} message to relay: {:?}", eose.id, relay);
+
+                                        tx_clone_2.send(json!(["CLOSE", eose.id]).to_string()).unwrap();
+                                    },
                                 }
                             }
                             Err(e) => {
@@ -193,68 +220,8 @@ fn convert_to_msg(msg: String, max_bytes: Option<usize>) -> Result<NostrMessage>
         }
         Err(e) => {
             debug!("proto parse error: {:?}", e);
-            debug!("parse error on message: {}", msg.trim());
+            error!("parse error on message: {}", msg.trim());
             Err(Error::ProtoParseError)
-        }
-    }
-}
-
-pub async fn connect(event_tx: tokio::sync::mpsc::Sender<Event>, server: &str){
-    let message = r#"["REQ", "cid", { "limit": 20000 }]"#;
-
-    loop {
-        let url = Url::parse(server).unwrap();
-
-        let (mut socket, _) = match connect_async(url).await {
-            Ok(s) => s,
-            Err(e) => {
-                error!("Error connecting to {}: {:?}", server, e);
-                // wait 5 seconds before trying to reconnect
-                tokio::time::sleep(Duration::from_secs(5)).await;
-                continue;
-            }
-        };
-
-        socket.send(message.into()).await.unwrap();
-
-        while let Some(msg) = socket.next().await {
-            let msg = msg.unwrap();
-            if msg.is_text() {
-                let msg = msg.into_text().unwrap();
-                let parsed_msg = convert_to_msg(msg, None);
-
-                match parsed_msg {
-                    Ok(m) => {
-                        match m {
-                            NostrMessage::EventMsg(ec) => {
-                                let parsed: Result<Event> = Result::<Event>::from(ec);
-
-                                match parsed {
-                                    Ok(e) => {
-                                        let id_prefix: String = e.id.chars().take(8).collect();
-                                        debug!(
-                                            "successfully parsed/validated event: {:?} relay: {:?}",
-                                            id_prefix, server
-                                        );
-                                        // check if the event is too far in the future.
-                                            // Write this to the database.
-                                        if let Err(_) = event_tx.send(e.clone()).await {
-                                                error!("receiver dropped");
-                                                return;
-                                        }
-                                    }
-                                    Err(e) => {
-                                        error!("client sent an invalid event");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        error!("Error: {:?}", e);
-                    }
-                }
-            }
         }
     }
 }

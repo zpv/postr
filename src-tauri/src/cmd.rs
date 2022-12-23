@@ -140,7 +140,7 @@ pub fn user_convos(db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<A
             },
         ];
     
-    let req = Req::new(None, filters);
+    let req = Req::new(Some("convos"), filters);
     debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
 
@@ -254,7 +254,7 @@ pub fn user_dms(peer: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri
         ],
     };
 
-    let req = Req::new(None, subscription.clone().filters);
+    let req = Req::new(Some(&format!("{}-dms", peer)), subscription.clone().filters);
     debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
 
