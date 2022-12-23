@@ -263,6 +263,8 @@ pub fn user_convos(privkey: &str, pool: tauri::State<SqlitePool>, relay_pool: ta
             result.push(event.unwrap());
         }
 
+        result.sort_by(|a, b| b.last_message.cmp(&a.last_message));
+
         debug!("result: {:?}", result);
 
         Ok(result)

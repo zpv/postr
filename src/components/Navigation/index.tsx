@@ -3,18 +3,18 @@ import NavigationButton from "../NavigationButton";
 import activity from "../../assets/nav_activity.png";
 import message from "../../assets/nav_message.png";
 
-const Navigation = ({ user_profile, tab }) => {
+const Navigation = ({ user_profile, tab, user }) => {
   const { picture, name, pubkey } = user_profile;
   const buttons = [
     {
       name: "Messages",
       icon: message,
-      href: "/messages?pubkey=" + pubkey,
+      href: "/messages?privkey=" + user,
     },
     {
       name: "Feed",
       icon: activity,
-      href: "/feed?pubkey=" + pubkey,
+      href: "/feed?privkey=" + user,
     },
   ]
 

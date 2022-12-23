@@ -3,13 +3,24 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 
 Feed.getInitialProps = async (ctx) => {
-  const pubkey = "6a0e6b709fb5239a3df637695764f153e56edccd48fa1c64916b8481d0ca3ab3";
-  const user_profile = await invoke("user_profile", { pubkey });
+  const privkey = ctx.query.privkey;
+  const user_pubkey = await invoke("to_pubkey", { privkey });
+  console.log(user_pubkey);
+  const user_profile:any = await invoke("user_profile", { pubkey: user_pubkey }).catch(e => {
+    return {
+      picture: `https://robohash.org/${user_pubkey}.png`,
+      pubkey: user_pubkey
+    }
+  });
+
+  if (!user_profile.picture) {
+    user_profile.picture = `https://robohash.org/${user_pubkey}.png`;
+  }
 
   return { user_profile };
 }
 
-function Feed({ user_profile }) {
+function Feed({ user_profile, user }) {
   const tab = "Feed";
   const pageBody = (
     <>
@@ -19,7 +30,7 @@ function Feed({ user_profile }) {
 
 
   return (
-    <Layout {...{user_profile}} {...{tab}}>
+    <Layout {...{user_profile}} {...{tab, user}}>
       {pageBody}
     </Layout>
   );
