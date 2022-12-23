@@ -19,6 +19,7 @@ use crate::db::SqlitePool;
 use crate::db::query_from_sub;
 use crate::event::Event;
 use crate::socket::RelayPool;
+use crate::state::PostrState;
 use crate::subscription::Req;
 use crate::subscription::ReqFilter;
 use serde::{Deserialize, Serialize};
@@ -39,10 +40,21 @@ pub struct UserProfile {
     first_seen: i64
 }
 
+#[command]
+pub fn set_privkey(privkey: &str, state: tauri::State<PostrState>) -> Result<(), String> {
+    let mut state = state.0.write().unwrap();
+
+    // verify privkey is valid
+    let identity = Identity::from_str(privkey).unwrap();
+    state.privkey = privkey.to_string();
+    state.pubkey = identity.public_key_str;
+
+    Ok(())
+}
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[command]
-pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>) -> Result<UserProfile, String> {
+pub fn user_profile(pubkey: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>) -> Result<UserProfile, String> {
     let filters = vec![
             ReqFilter { 
                 ids: None,
@@ -61,7 +73,7 @@ pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>, relay_pool: ta
     relay_pool.lock().unwrap().send(req.to_string());
 
     // get user profile from pubkey
-    if let Ok(conn) = pool.get() {
+    if let Ok(conn) = db_pool.get() {
         let mut statement = conn.prepare("SELECT * FROM users WHERE pubkey = ? AND is_current").unwrap();
         let mut users = statement.query_map([pubkey], |row| {
             Ok(
@@ -90,8 +102,9 @@ pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>, relay_pool: ta
 }
 
 #[command]
-pub fn user_dms(peer: &str, privkey: &str, pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>> ) -> Result<Vec<PrivateMessage>, String> {
-    let identity = Identity::from_str(privkey).unwrap();
+pub fn user_dms(peer: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState> ) -> Result<Vec<PrivateMessage>, String> {
+    let privkey = state.0.read().unwrap().privkey.clone();
+    let identity = Identity::from_str(&privkey).unwrap();
     let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
 
     let subscription = Subscription {
@@ -132,7 +145,7 @@ pub fn user_dms(peer: &str, privkey: &str, pool: tauri::State<SqlitePool>, relay
     let (q, p) = query_from_sub(&subscription);
     debug!("query: {}", q);
 
-    if let Ok(conn) = pool.get() {
+    if let Ok(conn) = db_pool.get() {
         let mut statement = conn.prepare(&q).unwrap();
 
         let mut events = statement.query_map(rusqlite::params_from_iter(p), |row| {
@@ -185,8 +198,9 @@ pub struct UserConvo {
 }
 
 #[command]
-pub fn user_convos(privkey: &str, pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>> ) -> Result<Vec<UserConvo>, String> {
-    let identity = Identity::from_str(privkey).unwrap();
+pub fn user_convos(db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState>) -> Result<Vec<UserConvo>, String> {
+    let privkey = state.0.read().unwrap().privkey.clone();
+    let identity = Identity::from_str(&privkey).unwrap();
 
     let filters = vec![
             ReqFilter { 
@@ -219,7 +233,7 @@ pub fn user_convos(privkey: &str, pool: tauri::State<SqlitePool>, relay_pool: ta
     relay_pool.lock().unwrap().send(req.to_string());
 
     debug!("Invoked user_convos with {:?}", identity.public_key_str);
-    if let Ok(conn) = pool.get() {
+    if let Ok(conn) = db_pool.get() {
         let mut statement = conn.prepare(r##"
         SELECT peer, MAX(last_message) last_message
         FROM (
@@ -279,15 +293,15 @@ pub fn user_convos(privkey: &str, pool: tauri::State<SqlitePool>, relay_pool: ta
 }
 
 #[command]
-pub fn to_pubkey(privkey: &str) -> Result<String, String> {
-    let identity = Identity::from_str(privkey).unwrap();
-    Ok(identity.public_key_str)
+pub fn get_pubkey(state: tauri::State<'_, PostrState>) -> Result<String, String> {
+    Ok(state.0.read().unwrap().pubkey.clone())
 }
 
 #[command]
-pub async fn sub_to_msg_events(privkey: &str, bcast_tx: tauri::State<'_, broadcast::Sender<Event>>, app_handle: tauri::AppHandle) -> Result<(), ()> {
+pub async fn sub_to_msg_events(bcast_tx: tauri::State<'_, broadcast::Sender<Event>>, state: tauri::State<'_, PostrState>, app_handle: tauri::AppHandle) -> Result<(), ()> {
+    let privkey = state.0.read().unwrap().privkey.clone();
+    let identity = Identity::from_str(&privkey).unwrap();
     let mut bcast_rx = bcast_tx.subscribe();
-    let identity = Identity::from_str(privkey).unwrap();
 
     let sub_filter = 
         Subscription {
@@ -362,8 +376,9 @@ pub async fn sub_to_msg_events(privkey: &str, bcast_tx: tauri::State<'_, broadca
 
 
 #[command]
-pub fn send_dm(privkey: &str, peer: &str, message: &str, relay_pool: tauri::State<Arc<Mutex<RelayPool>>> ) -> Result<(), ()> {
-    let identity = Identity::from_str(privkey).unwrap();
+pub fn send_dm(peer: &str, message: &str, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState>) -> Result<(), ()> {
+    let privkey = state.0.read().unwrap().privkey.clone();
+    let identity = Identity::from_str(&privkey).unwrap();
 
     let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
     let encrypted_message = encrypt(&identity.secret_key, &x_pub_key, message).unwrap();

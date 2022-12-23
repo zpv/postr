@@ -9,3 +9,4 @@ pub mod socket;
 pub mod subscription;
 pub mod hexrange;
 pub mod cmd;
+pub mod state;
