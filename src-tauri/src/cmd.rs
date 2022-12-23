@@ -101,94 +101,6 @@ pub fn user_profile(pubkey: &str, db_pool: tauri::State<SqlitePool>, relay_pool:
     }
 }
 
-#[command]
-pub fn user_dms(peer: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState> ) -> Result<Vec<PrivateMessage>, String> {
-    let privkey = state.0.read().unwrap().privkey.clone();
-    let identity = Identity::from_str(&privkey).unwrap();
-    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
-
-    let subscription = Subscription {
-        id: "idk".to_string(),
-        filters: vec![
-            ReqFilter { 
-                ids: None,
-                kinds: Some([4].to_vec()),
-                since: None,
-                until: None,
-                authors: Some([identity.public_key_str.clone()].to_vec()),
-                limit: Some(100),
-                tags: Some(
-                    HashMap::from([('p', HashSet::from([x_pub_key.to_string()]))])
-                ),
-                force_no_match: false,
-            }
-            ,
-            ReqFilter { 
-                ids: None,
-                kinds: Some([4].to_vec()),
-                since: None,
-                until: None,
-                authors: Some([x_pub_key.to_string()].to_vec()),
-                limit: Some(100),
-                tags: Some(
-                    HashMap::from([('p', HashSet::from([identity.public_key_str.clone()]))])
-                ),
-                force_no_match: false,
-            },
-        ],
-    };
-
-    let req = Req::new(None, subscription.clone().filters);
-    debug!("req: {:?}", req.to_string());
-    relay_pool.lock().unwrap().send(req.to_string());
-
-    let (q, p) = query_from_sub(&subscription);
-    debug!("query: {}", q);
-
-    if let Ok(conn) = db_pool.get() {
-        let mut statement = conn.prepare(&q).unwrap();
-
-        let mut events = statement.query_map(rusqlite::params_from_iter(p), |row| {
-            let msg: String = row.get(0)?;
-            let event: Event = serde_json::from_str(&msg).unwrap();
-            let created_at: i64 = row.get(1)?;
-        
-            let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
-            {
-                Ok(message) => message,
-                Err(e) => {
-                    error!("decryption error: {}", e);
-                    return Err(rusqlite::Error::InvalidQuery);
-                }
-            };
-
-            // deserialize the message as event
-            debug!("event: {:?}", decrypted_message);
-
-
-            let private_message = PrivateMessage {
-                author: event.pubkey,
-                content: decrypted_message,
-                timestamp: created_at as u64,
-            };
-
-            Ok(private_message)
-
-        }).unwrap();
-
-
-        let mut result = Vec::new();
-        while let Some(event) = events.next() {
-            result.push(event.unwrap());
-        }
-
-        debug!("result: {:?}", result);
-        result.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
-        Ok(result)
-    } else {
-        Err("no user".to_string())
-    }
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 
@@ -297,6 +209,111 @@ pub fn get_pubkey(state: tauri::State<'_, PostrState>) -> Result<String, String>
     Ok(state.0.read().unwrap().pubkey.clone())
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PrivateMessageWithRecipient {
+    pub author: String,
+    pub content: String,
+    pub timestamp: u64,
+    pub recipient: String,
+}
+
+#[command]
+pub fn user_dms(peer: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState> ) -> Result<Vec<PrivateMessageWithRecipient>, String> {
+    let privkey = state.0.read().unwrap().privkey.clone();
+    let identity = Identity::from_str(&privkey).unwrap();
+    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
+
+    let subscription = Subscription {
+        id: "idk".to_string(),
+        filters: vec![
+            ReqFilter { 
+                ids: None,
+                kinds: Some([4].to_vec()),
+                since: None,
+                until: None,
+                authors: Some([identity.public_key_str.clone()].to_vec()),
+                limit: Some(100),
+                tags: Some(
+                    HashMap::from([('p', HashSet::from([x_pub_key.to_string()]))])
+                ),
+                force_no_match: false,
+            }
+            ,
+            ReqFilter { 
+                ids: None,
+                kinds: Some([4].to_vec()),
+                since: None,
+                until: None,
+                authors: Some([x_pub_key.to_string()].to_vec()),
+                limit: Some(100),
+                tags: Some(
+                    HashMap::from([('p', HashSet::from([identity.public_key_str.clone()]))])
+                ),
+                force_no_match: false,
+            },
+        ],
+    };
+
+    let req = Req::new(None, subscription.clone().filters);
+    debug!("req: {:?}", req.to_string());
+    relay_pool.lock().unwrap().send(req.to_string());
+
+    let (q, p) = query_from_sub(&subscription);
+    debug!("query: {}", q);
+
+    if let Ok(conn) = db_pool.get() {
+        let mut statement = conn.prepare(&q).unwrap();
+
+        let mut events = statement.query_map(rusqlite::params_from_iter(p), |row| {
+            let msg: String = row.get(0)?;
+            let event: Event = serde_json::from_str(&msg).unwrap();
+            let created_at: i64 = row.get(1)?;
+        
+            let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
+            {
+                Ok(message) => message,
+                Err(e) => {
+                    error!("decryption error: {}", e);
+                    return Err(rusqlite::Error::InvalidQuery);
+                }
+            };
+
+            // deserialize the message as event
+            debug!("event: {:?}", decrypted_message);
+            
+            // if event.pubkey is our pubkey, then the recipient is the peer
+            let recipient = if event.pubkey == identity.public_key_str {
+                x_pub_key.to_string()
+            } else {
+                identity.public_key_str.clone()
+            };
+
+            let private_message = PrivateMessageWithRecipient {
+                author: event.pubkey,
+                content: decrypted_message,
+                recipient,
+                timestamp: created_at as u64,
+            };
+
+            Ok(private_message)
+
+        }).unwrap();
+
+
+        let mut result = Vec::new();
+        while let Some(event) = events.next() {
+            result.push(event.unwrap());
+        }
+
+        debug!("result: {:?}", result);
+        result.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        Ok(result)
+    } else {
+        Err("no user".to_string())
+    }
+}
+
+
 #[command]
 pub async fn sub_to_msg_events(bcast_tx: tauri::State<'_, broadcast::Sender<Event>>, state: tauri::State<'_, PostrState>, app_handle: tauri::AppHandle) -> Result<(), ()> {
     let privkey = state.0.read().unwrap().privkey.clone();
@@ -357,11 +374,16 @@ pub async fn sub_to_msg_events(bcast_tx: tauri::State<'_, broadcast::Sender<Even
 
             // deserialize the message as event
             debug!("event: {:?}", decrypted_message);
+            let recipient = if event.pubkey == identity.public_key_str {
+                x_pub_key.to_string()
+            } else {
+                identity.public_key_str.clone()
+            };
 
-
-            let private_message = PrivateMessage {
+            let private_message = PrivateMessageWithRecipient {
                 author: event.pubkey.clone(),
                 content: decrypted_message,
+                recipient,
                 timestamp: event.created_at as u64,
             };
 
