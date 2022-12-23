@@ -6,17 +6,16 @@ import Message from "../../components/Message";
 
 import MessagesNav from "../../components/MessagesNav";
 
-const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
+const MessagesLayout = ({ user_profile, peer, setPeer }) => {
   const [conversation, setConversation] = useState([]);
   const [message_list, setMessageList] = useState([]);
   const [peer_profiles, setPeerProfiles] = useState({});
+  const [message, setMessage] = useState("");
+  const [onSubmit, setOnSubmit] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // mapping of peer pubkey to message refs
-  const [message_refs, setMessageRefs] = useState({});
-
   const getMessages = async () => {
-    return await invoke("user_convos", { privkey: user });
+    return await invoke("user_convos");
   };
 
   const getProfiles = async (messages) => {
@@ -30,11 +29,6 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
           profile.picture = `https://robohash.org/${message.peer}.png`;
         }
         profiles[message.peer] = profile;
-
-        // set up message refs to this message
-        if (!message_refs[message.peer]) {
-          message_refs[message.peer] = message;
-        }
       } catch {
         console.log("failed to get profile for ", message.peer);
 
@@ -67,14 +61,27 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
         console.log(e);
       });
 
+  function removeItem<T>(arr: Array<T>, value: T): Array<T> {
+    const index = arr.indexOf(value);
+    if (index > -1) {
+      arr.splice(index, 1);
+    }
+    return arr;
+  }
+
   useEffect(() => {
-    const unlisten = listen("dm", (event:any) => {
+    const unlisten = listen("dm", (event: any) => {
       // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
       // event.payload is the payload object
       // refreshMessages();
       console.log(event);
-      console.log(message_refs);
-      if (peer === event.payload.author || user_profile.pubkey === event.payload.author) {
+      console.log("PEER", peer)
+      console.log("AUTHOR", event.payload.author)
+      if (
+        peer === event.payload.author ||
+        (user_profile.pubkey === event.payload.author &&
+          peer === event.payload.recipient)
+      ) {
         setConversation((prev) => [...prev, event.payload]);
       }
     });
@@ -84,15 +91,14 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
     return () => {
       unlisten.then((f) => f());
     };
-  }, []);
+  }, [peer]);
 
   useEffect(() => {
-    // setConversation([]);       // will we need this?
     setLoading(true);
 
     if (peer !== "") {
       const switchConversation = async () => {
-        return await invoke("user_dms", { peer, privkey: user });
+        return await invoke("user_dms", { peer });
       };
       switchConversation()
         .then((r: any) => {
@@ -106,6 +112,26 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
         });
     }
   }, [peer]);
+
+  useEffect(() => {
+    if (onSubmit && message !== "") {
+      const sendMessage = async () => {
+        return await invoke("send_dm", { peer, message });
+      };
+      sendMessage()
+        .then((r: any) => {
+          setOnSubmit(false);
+          setMessage("");
+        })
+        .catch((e) => {
+          setOnSubmit(false);
+          setMessage("");
+          console.log(e);
+        });
+    } else {
+      setOnSubmit(false);
+    }
+  }, [onSubmit]);
 
   return (
     <>
@@ -124,6 +150,9 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
           peer,
           conversation,
           loading,
+          message,
+          setMessage,
+          setOnSubmit,
         }}
       />
     </>

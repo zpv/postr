@@ -69,7 +69,9 @@ function App({ peer, setPeer, user, setUser }) {
         <Link href={`/messages?privkey=${privkey}`}>
           <h2
             className="rounded-lg px-2 bg-neutral-800 hover:bg-slate-700 cursor-pointer"
-            onClick={(e) => setUser(privkey)}
+            onClick={(e) => {setUser("bb13681e0cd2f86d6a8d124fe051abf8a8a250a6d7357cb6b6e67a8640203ece")
+            launchApp()
+            }}
           >
             Launch with default private key
           </h2>

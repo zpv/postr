@@ -4,9 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import Layout from "../../layouts/Layout";
 
 Messages.getInitialProps = async (ctx) => {
-  const privkey = ctx.query.privkey;
   const user_pubkey = await invoke("get_pubkey");
-  console.log(user_pubkey);
   const user_profile:any = await invoke("user_profile", { pubkey: user_pubkey }).catch(e => {
     return {
       picture: `https://robohash.org/${user_pubkey}.png`,
@@ -24,16 +22,15 @@ Messages.getInitialProps = async (ctx) => {
 function Messages({
   user_profile,
   peer,
-  setPeer,
-  user,
+  setPeer
 }) {
   // rudimentary state lol
   const tab = "Messages";
 
   return (
-    <Layout {...{ user_profile }} {...{ tab, user }}>
+    <Layout {...{ user_profile }} {...{ tab }}>
       <MessagesLayout
-        {...{ user_profile, user, peer, setPeer }}
+        {...{ user_profile, peer, setPeer }}
       />
     </Layout>
   );
