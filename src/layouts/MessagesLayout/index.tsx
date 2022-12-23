@@ -61,11 +61,14 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
       });
 
   useEffect(() => {
-    const unlisten = listen("dm", (event) => {
+    const unlisten = listen("dm", (event:any) => {
       // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
       // event.payload is the payload object
       // refreshMessages();
       console.log(event);
+      if (peer === event.payload.author || user_profile.pubkey === event.payload.author) {
+        setConversation((prev) => [...prev, event.payload]);
+      }
     });
 
     refreshMessages();
