@@ -196,7 +196,7 @@ pub fn write_event(conn: &mut PooledConnection, e: &Event) -> Result<usize> {
 
         if update_count > 0 {
             tx.commit()?;
-            return Ok(update_count);
+            return Ok(ins_count);
         }
 
         // if the event was a duplicate, no need to insert event or
