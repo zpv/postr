@@ -4,8 +4,8 @@ extern crate tokio;
 use postr::db::{self, SqlitePool};
 use postr::event::Event;
 use postr::socket::RelayPool;
-use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__to_pubkey, __cmd__user_convos};
-use postr::cmd::{user_profile, user_dms, to_pubkey, user_convos};
+use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__to_pubkey, __cmd__user_convos, __cmd__sub_to_msg_events};
+use postr::cmd::{user_profile, user_dms, to_pubkey, user_convos, sub_to_msg_events};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use serde::{Deserialize, Serialize};
@@ -151,11 +151,13 @@ fn main() {
         tauri::Builder::default()
             .manage(pool)
             .manage(relay_pool)
+            .manage(bcast_tx)
             .invoke_handler(tauri::generate_handler![
                 user_profile,
                 user_dms,
                 user_convos,
-                to_pubkey
+                to_pubkey,
+                sub_to_msg_events
             ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");

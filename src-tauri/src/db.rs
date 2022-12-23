@@ -141,6 +141,8 @@ pub async fn db_writer(
                             event.get_author_prefix(),
                             start.elapsed()
                         );
+
+                        bcast_tx.send(event.clone()).ok();
                     }
                 }
                 Err(err) => {

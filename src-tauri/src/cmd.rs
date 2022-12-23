@@ -9,6 +9,8 @@ use nostr_rust::Identity;
 use nostr_rust::nips::nip4::PrivateMessage;
 use nostr_rust::nips::nip4::decrypt;
 use rusqlite::ToSql;
+use tauri::Manager;
+use tokio::sync::broadcast;
 use crate::db::SqlitePool;
 use crate::db::query_from_sub;
 use crate::event::Event;
@@ -132,7 +134,6 @@ pub fn user_dms(peer: &str, privkey: &str, pool: tauri::State<SqlitePool>, relay
         let mut events = statement.query_map(rusqlite::params_from_iter(p), |row| {
             let msg: String = row.get(0)?;
             let event: Event = serde_json::from_str(&msg).unwrap();
-
             let created_at: i64 = row.get(1)?;
         
             let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
@@ -277,4 +278,80 @@ pub fn user_convos(privkey: &str, pool: tauri::State<SqlitePool>, relay_pool: ta
 pub fn to_pubkey(privkey: &str) -> Result<String, String> {
     let identity = Identity::from_str(privkey).unwrap();
     Ok(identity.public_key_str)
+}
+
+#[command]
+pub async fn sub_to_msg_events(privkey: &str, bcast_tx: tauri::State<'_, broadcast::Sender<Event>>, app_handle: tauri::AppHandle) -> Result<(), ()> {
+    let mut bcast_rx = bcast_tx.subscribe();
+    let identity = Identity::from_str(privkey).unwrap();
+
+    let sub_filter = 
+        Subscription {
+            id: "dms".to_string(),
+            filters:     vec![
+                ReqFilter { 
+                    ids: None,
+                    kinds: Some([4].to_vec()),
+                    since: None,
+                    until: None,
+                    authors: Some([identity.public_key_str.clone()].to_vec()),
+                    limit: Some(100),
+                    tags: None,
+                    force_no_match: false,
+                }
+                ,
+                ReqFilter { 
+                    ids: None,
+                    kinds: Some([4].to_vec()),
+                    since: None,
+                    until: None,
+                    authors: None,
+                    limit: Some(100),
+                    tags: Some(
+                        HashMap::from([('p', HashSet::from([identity.public_key_str.clone()]))])
+                    ),
+                    force_no_match: false,
+                },
+            ]
+        };
+
+    while let Ok(event) = &bcast_rx.recv().await {
+        debug!("event: {:?}", event);
+
+        if sub_filter.interested_in_event(event) {
+            // peer is the other user in the convo. if author is us, then peer is the tag value
+            let peer = if event.pubkey == identity.public_key_str {
+                event.tags.get(0).unwrap().get(1).unwrap().clone()
+            } else {
+                event.pubkey.clone()
+            };
+
+            let x_pub_key = secp256k1::XOnlyPublicKey::from_str(&peer).unwrap();
+
+            let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
+            {
+                Ok(message) => message,
+                Err(e) => {
+                    error!("decryption error: {}", e);
+                    return Err(());
+                }
+            };
+
+            // deserialize the message as event
+            debug!("event: {:?}", decrypted_message);
+
+
+            let private_message = PrivateMessage {
+                author: event.pubkey.clone(),
+                content: decrypted_message,
+                timestamp: event.created_at as u64,
+            };
+
+            app_handle.emit_all("dm", private_message).unwrap();
+
+            debug!("matches");
+        }
+    }
+
+    Ok(())
 }
