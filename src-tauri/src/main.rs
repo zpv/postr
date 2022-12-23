@@ -3,13 +3,15 @@ extern crate tokio;
 
 use postr::db::{self, SqlitePool};
 use postr::event::Event;
-use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__to_pubkey};
-use postr::cmd::{user_profile, user_dms, to_pubkey};
+use postr::socket::RelayPool;
+use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__to_pubkey, __cmd__user_convos};
+use postr::cmd::{user_profile, user_dms, to_pubkey, user_convos};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use serde::{Deserialize, Serialize};
 use tokio::task;
 
+use std::sync::{Arc, Mutex};
 use std::{env, thread};
 use std::error::Error;
 use std::path::Path;
@@ -128,14 +130,15 @@ fn main() {
         info!("db writer created");
 
         let relays = vec!["wss://satstacker.cloud", "wss://relay.damus.io", "wss://relay.nostr.info"];
-        // spawn a task for each relay
-        for relay in relays {
+
+        let broadcast_txs: Vec<Sender<String>> = relays.into_iter().map(|relay| {
             let event_tx = event_tx.clone();
             let mut relay = socket::RelaySocket::new(relay.to_string(), event_tx);
             let tx = relay.connect();
-            
-            std::thread::sleep(std::time::Duration::from_millis(1000));
-        }
+            tx
+        }).collect();
+
+        let relay_pool = Arc::new(Mutex::new(RelayPool::new(broadcast_txs)));
 
         let pool = db::build_pool(
             "client query",
@@ -147,9 +150,11 @@ fn main() {
 
         tauri::Builder::default()
             .manage(pool)
+            .manage(relay_pool)
             .invoke_handler(tauri::generate_handler![
                 user_profile,
                 user_dms,
+                user_convos,
                 to_pubkey
             ])
             .run(tauri::generate_context!())

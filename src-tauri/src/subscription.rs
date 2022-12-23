@@ -1,12 +1,55 @@
 //! Subscription and filter parsing
 use crate::error::Result;
 use crate::event::Event;
+use crate::utils::random_hash;
 use serde::de::Unexpected;
 use serde::ser::SerializeMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
+use serde_json::json;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::fmt;
+
+
+
+/// Req struct is used to request events and subscribe to new updates.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Req {
+    /// `<subscription_id>` is a random string that should be used to represent a subscription.
+    pub subscription_id: String,
+    /// `<filters>` is a JSON object that determines what events will be sent in that subscription, it can have the following attributes:
+    pub filters: Vec<ReqFilter>,
+}
+
+impl Req {
+    pub fn new(subscription_id: Option<&str>, filters: Vec<ReqFilter>) -> Self {
+        Self {
+            subscription_id: subscription_id.unwrap_or(&random_hash()).to_string(),
+            filters,
+        }
+    }
+
+    pub fn get_close_event(&self) -> String {
+        json!({
+            "subscription_id": self.subscription_id,
+            "close": true
+        })
+        .to_string()
+    }
+}
+
+impl fmt::Display for Req {
+    /// Return the serialized event
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut req = json!(["REQ", self.subscription_id]);
+        for filter in &self.filters {
+            req.as_array_mut().unwrap().push(json!(filter));
+        }
+
+        write!(f, "{}", serde_json::to_string(&req).unwrap())
+    }
+}
 
 /// Subscription identifier and set of request filters
 #[derive(Serialize, PartialEq, Eq, Debug, Clone)]
@@ -48,7 +91,7 @@ impl Serialize for ReqFilter {
         // tags are a special case, since they are a map of chars to a set of string
         // in the serialized JSON, each char should be a key called `\#{char}` and the value should be the set of strings 
 
-        let mut map = serializer.serialize_map(Some(8))?;
+        let mut map = serializer.serialize_map(Some(7 + self.tags.as_ref().map(|t| t.len()).unwrap_or(0)))?;
         if let Some(ids) = &self.ids {
             map.serialize_entry("ids", ids)?;
         }
@@ -364,6 +407,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -383,6 +427,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -402,6 +447,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(!s.interested_in_event(&e));
         Ok(())
@@ -422,6 +468,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -446,6 +493,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s_in.interested_in_event(&e));
         assert!(!s_before.interested_in_event(&e));
@@ -468,6 +516,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(!s.interested_in_event(&e));
         Ok(())
@@ -487,6 +536,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -506,6 +556,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -525,6 +576,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -544,6 +596,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -563,6 +616,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         assert!(!s.interested_in_event(&e));
         Ok(())

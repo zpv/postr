@@ -3,11 +3,13 @@ extern crate websocket;
 
 use crate::db;
 use futures_util::{SinkExt, StreamExt};
+use tokio::join;
 use tokio_tungstenite::tungstenite::Message;
 use crate::error::{Error, Result};
 use crate::event::Event;
 use crate::event::EventResp;
 
+use std::collections::{hash_set, HashSet};
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -41,6 +43,29 @@ pub struct RelaySocket {
 
     // The channel the socket will send events to
     event_tx: tokio::sync::mpsc::Sender<Event>,
+}
+
+pub struct RelayPool {
+    broadcast_txs: Vec<broadcast::Sender<String>>,
+}
+
+impl RelayPool {
+    // takes a vector of broadcast::Sender<String> and returns a RelayPool
+    pub fn new(broadcast_txs: Vec<broadcast::Sender<String>>) -> Self {
+        Self {
+            broadcast_txs
+        }
+    }
+
+    pub fn add(&mut self, tx: broadcast::Sender<String>) {
+        self.broadcast_txs.push(tx);
+    }
+
+    pub fn send(&mut self, msg: String) {
+        for tx in self.broadcast_txs.iter() {
+            tx.send(msg.clone()).unwrap();
+        }
+    }
 }
 
 impl RelaySocket {
@@ -116,14 +141,14 @@ impl RelaySocket {
                                         let parsed: Result<Event> = Result::<Event>::from(ec);
         
                                         match parsed {
-                                            Ok(e) => {
+                                            Ok(mut e) => {
                                                 let id_prefix: String = e.id.chars().take(8).collect();
+                                                e.seen_by = vec![relay.clone()];
                                                 debug!(
                                                     "successfully parsed/validated event: {:?} relay: {:?}",
                                                     id_prefix, &relay
                                                 );
-                                                // check if the event is too far in the future.
-                                                    // Write this to the database.
+
                                                 if let Err(_) = &event_tx.send(e.clone()).await {
                                                         error!("receiver dropped");
                                                         return;

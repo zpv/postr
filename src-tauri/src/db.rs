@@ -12,6 +12,7 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::params;
 use rusqlite::types::ToSql;
 use rusqlite::OpenFlags;
+use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::thread;
@@ -118,7 +119,7 @@ pub async fn db_writer(
                 break;
             }
 
-            info!("Gettingg next event");
+            info!("Getting next event");
             // call blocking read on channel
             let next_event = event_rx.blocking_recv();
 
@@ -171,12 +172,31 @@ pub fn write_event(conn: &mut PooledConnection, e: &Event) -> Result<usize> {
         }
     }
 
+    let seen_map = e
+        .seen_by
+        .iter()
+        .map(|s| (s.to_string(), true))
+        .collect::<HashMap<String, bool>>();
+    let seen_map_str = serde_json::to_string(&seen_map).ok();
+
     // ignore if the event hash is a duplicate.
     let mut ins_count = tx.execute(
-			"INSERT OR IGNORE INTO event (event_hash, created_at, kind, author, pubkey, delegated_by, raw_event, content, first_seen, hidden) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, strftime('%s','now'), FALSE);",
-			params![id_blob, e.created_at, e.kind, pubkey_blob, e.pubkey, delegator_blob, event_str, e.content]
+			"INSERT OR IGNORE INTO event (event_hash, created_at, kind, author, pubkey, delegated_by, raw_event, content, seen_by, first_seen, hidden) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, strftime('%s','now'), FALSE);",
+			params![id_blob, e.created_at, e.kind, pubkey_blob, e.pubkey, delegator_blob, event_str, e.content, seen_map_str]
 	)?;
+
     if ins_count == 0 {
+        // update the seen_by field of the event.
+        let update_count = tx.execute(
+            r##"UPDATE event SET seen_by = json_patch(seen_by, ?1) WHERE event_hash = ?2;"##,
+            params![seen_map_str, id_blob],
+        )?;
+
+        if update_count > 0 {
+            tx.commit()?;
+            return Ok(update_count);
+        }
+
         // if the event was a duplicate, no need to insert event or
         // pubkey references.
         tx.rollback().ok();

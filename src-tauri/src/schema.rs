@@ -43,7 +43,8 @@ delegated_by BLOB, -- delegator pubkey (NIP-26)
 kind INTEGER NOT NULL, -- event kind
 hidden INTEGER, -- relevant for queries
 content TEXT NOT NULL, -- serialized json of content object
-raw_event TEXT NOT NULL -- serialized json of event object
+raw_event TEXT NOT NULL, -- serialized json of event object
+seen_by TEXT NOT NULL -- serialized json array of relays that have seen this event
 );
 
 -- Event Indexes

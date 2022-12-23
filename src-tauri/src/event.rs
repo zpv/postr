@@ -62,6 +62,8 @@ pub struct Event {
     // Optimization for tag search, built on demand.
     #[serde(skip)]
     pub(crate) tagidx: Option<HashMap<char, HashSet<String>>>,
+    #[serde(skip)]
+    pub(crate) seen_by: Vec<String>,
 }
 
 /// Simple tag type for array of array of strings.
@@ -327,6 +329,7 @@ mod tests {
             content: "".to_owned(),
             sig: "0".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         }
     }
 
@@ -409,6 +412,7 @@ mod tests {
             content: "this is a test".to_owned(),
             sig: "abcde".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         let c = e.to_canonical();
         let expected = Some(r#"[0,"012345",501234,1,[],"this is a test"]"#.to_owned());
@@ -437,6 +441,7 @@ mod tests {
             content: "this is a test".to_owned(),
             sig: "abcde".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         let v = e.tag_values_by_name("e");
         assert_eq!(v, vec!["foo", "bar", "baz"]);
@@ -463,6 +468,7 @@ mod tests {
             content: "this is a test".to_owned(),
             sig: "abcde".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         let v = e.tag_values_by_name("x");
         // asking for tags that don't exist just returns zero-length vector
@@ -488,6 +494,7 @@ mod tests {
             content: "this is a test".to_owned(),
             sig: "abcde".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         };
         let c = e.to_canonical();
         let expected_json = r###"[0,"012345",501234,1,[["#e","aoeu"],["#p","aaaa","ws://example.com"]],"this is a test"]"###;

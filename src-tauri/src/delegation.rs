@@ -343,6 +343,7 @@ mod tests {
             content: "".to_owned(),
             sig: "0".to_owned(),
             tagidx: None,
+            seen_by: Vec::new()
         }
     }
     // Check for condition logic on event w/ empty values
