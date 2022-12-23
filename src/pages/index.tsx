@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
@@ -8,8 +7,9 @@ const relayUrls = [
   "wss://nostr-relay.untethr.me",
 ];
 
-function App({ peer, setPeer, user, setUser }) {
+function App() {
   const [greetMsg, setGreetMsg] = useState("");
+  const [privkey, setPrivkey] = useState("");
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -23,12 +23,12 @@ function App({ peer, setPeer, user, setUser }) {
 
   const router = useRouter();
 
-  const launchApp = async () => {
-    await invoke("set_privkey", {privkey: user});
-    invoke("sub_to_msg_events")
+  const launchApp = async (privkey: string) => {
+    await invoke("set_privkey", { privkey });
+    invoke("sub_to_msg_events");
 
     router.push("/messages");
-  }
+  };
 
   // const user = {
   //   public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
@@ -40,7 +40,7 @@ function App({ peer, setPeer, user, setUser }) {
   //   cli: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee"
   // }
 
-  const privkey =
+  const default_privkey =
     "bb13681e0cd2f86d6a8d124fe051abf8a8a250a6d7357cb6b6e67a8640203ece";
 
   return (
@@ -54,28 +54,29 @@ function App({ peer, setPeer, user, setUser }) {
           className="rounded-lg px-2 bg-slate-600"
           id="pubkeyinput"
           type="text"
-          value={user}
-          onChange={(e) => setUser(e.target.value)}
+          value={privkey}
+          onChange={(e) => setPrivkey(e.target.value)}
           placeholder="Enter private key"
         />
-          <h2
-            className="px-4 mx-2 cursor-pointer bg-neutral-800 hover:bg-slate-700 rounded-md"
-            onClick={(e) =>{launchApp()}}>
-            Launch
-          </h2>
+        <h2
+          className="px-4 mx-2 cursor-pointer bg-neutral-800 hover:bg-slate-700 rounded-md"
+          onClick={(e) => {
+            launchApp(privkey);
+          }}
+        >
+          Launch
+        </h2>
       </div>
 
       <div className="flex p-5">
-        <Link href={`/messages?privkey=${privkey}`}>
-          <h2
-            className="rounded-lg px-2 bg-neutral-800 hover:bg-slate-700 cursor-pointer"
-            onClick={(e) => {setUser("bb13681e0cd2f86d6a8d124fe051abf8a8a250a6d7357cb6b6e67a8640203ece")
-            launchApp()
-            }}
-          >
-            Launch with default private key
-          </h2>
-        </Link>
+        <h2
+          className="rounded-lg px-2 bg-neutral-800 hover:bg-slate-700 cursor-pointer"
+          onClick={(e) => {
+            launchApp(default_privkey);
+          }}
+        >
+          Launch with default private key
+        </h2>
       </div>
 
       {/* <button onClick={greet}>test greet</button>
