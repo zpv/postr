@@ -7,6 +7,17 @@ import "../style.css";
 // This default export is required in a new `pages/_app.js` file.
 export default function MyApp({ Component, pageProps }: AppProps) {
   const [peer, setPeer] = useState("");
+  const [profiles, setProfiles] = useState({});
 
-  return <Component {...pageProps} {...{ peer, setPeer }} />;
+  return (
+    <Component
+      {...pageProps}
+      {...{
+        peer,
+        setPeer,
+        profiles,
+        setProfiles,
+      }}
+    />
+  );
 }

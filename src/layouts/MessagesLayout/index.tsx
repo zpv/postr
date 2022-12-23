@@ -6,11 +6,10 @@ import Message from "../../components/Message";
 
 import MessagesNav from "../../components/MessagesNav";
 
-const MessagesLayout = ({ user_profile, peer, setPeer }) => {
+const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
+  const [message, setMessage] = useState("");
   const [conversation, setConversation] = useState([]);
   const [message_list, setMessageList] = useState([]);
-  const [peer_profiles, setPeerProfiles] = useState({});
-  const [message, setMessage] = useState("");
   const [onSubmit, setOnSubmit] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +50,7 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
         return getProfiles(messages)
           .then((profiles) => {
             setMessageList(messages);
-            setPeerProfiles(profiles);
+            setProfiles(profiles);
             setLoading(false);
           })
           .catch((e) => {
@@ -60,22 +59,17 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
       })
       .catch((e) => {
         setMessageList([]);
-        setPeerProfiles({});
+        setProfiles({});
         setLoading(false);
         console.log(e);
       });
 
   useEffect(() => {
     const unlisten = listen("dm", (event: any) => {
-      // console.log(event);
-      // console.log("PEER", peer);
-      // console.log("AUTHOR", event.payload.author);
-
-      // if message is for this peer, add it to the conversation
+      // if dm is for this peer, add it to the conversation
       if (
         peer === event.payload.author ||
-        (user_profile.pubkey === event.payload.author &&
-          peer === event.payload.recipient)
+        (user === event.payload.author && peer === event.payload.recipient)
       ) {
         setConversation((prev) => [...prev, event.payload]);
       }
@@ -84,10 +78,10 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
 
       // setup profile if it doesn't exist
       const updatePeerProfile = (peer_pubkey) => {
-        const peer_profile = peer_profiles[peer_pubkey];
+        const peer_profile = profiles[peer_pubkey];
         if (!peer_profile) {
           getProfile(peer_pubkey).then((profile) => {
-            setPeerProfiles((prev_profiles) => {
+            setProfiles((prev_profiles) => {
               prev_profiles[peer_pubkey] = profile;
               return prev_profiles;
             });
@@ -95,6 +89,7 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
         }
       };
 
+      // update message list to move most recent message to top
       setMessageList((prev) => {
         // handle case where author === recipient (i.e. sending to self)
         if (event.payload.author === event.payload.recipient) {
@@ -120,23 +115,22 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
           }
         }
 
-        // handle case where author !== recipient
+        // handle rest of cases
         const message = prev.find(
           (m) =>
             (m.peer === event.payload.author ||
               m.peer === event.payload.recipient) &&
-            m.peer !== user_profile.pubkey
+            m.peer !== user
         );
         if (message) {
           message.last_message = Math.max(
             message.last_message,
             event.payload.timestamp
           );
-          // updatePeerProfile(message.peer);
           return [...prev].sort((a, b) => b.last_message - a.last_message);
         } else {
           const pubkey =
-            user_profile.pubkey === event.payload.author
+            user === event.payload.author
               ? event.payload.recipient
               : event.payload.author;
 
@@ -204,15 +198,15 @@ const MessagesLayout = ({ user_profile, peer, setPeer }) => {
       <MessagesNav
         {...{
           message_list,
-          peer_profile: peer_profiles[peer],
-          peer_profiles,
+          peer_profile: profiles[peer],
+          profiles,
           setPeer,
         }}
       />
       <Message
         {...{
-          user_profile,
-          peer_profile: peer_profiles[peer],
+          user,
+          peer_profile: profiles[peer],
           peer,
           conversation,
           loading,

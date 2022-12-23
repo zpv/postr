@@ -20,7 +20,7 @@ const MessageCompose = ({ message, setMessage, setOnSubmit }) => {
   //         className="rounded-full w-full bg-neutral-900 border border-neutral-600 py-1 px-3"
   //       />
 
-  const active = message ? "bg-indigo-800 border-indigo-900 cursor-pointer text-white" : "cursor-default border-neutral-600 text-neutral-500";
+  const active = message ? "bg-indigo-800 border-indigo-900 cursor-pointer text-white" : "cursor-default border-neutral-600 text-neutral-700";
 
   return (
     <>
@@ -34,7 +34,7 @@ const MessageCompose = ({ message, setMessage, setOnSubmit }) => {
             value={message}
             onChange={handleChange}
             placeholder="Type a message..."
-            className="rounded-tl-full rounded-bl-full w-full bg-neutral-900 border border-neutral-600 py-1 px-3"
+            className="rounded-tl-full rounded-bl-full w-full bg-neutral-900 border border-neutral-600 py-1 px-3 placeholder-neutral-500 focus:placeholder-opacity-0"
           />
           <button
             type="submit"

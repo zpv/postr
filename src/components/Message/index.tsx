@@ -6,7 +6,7 @@ import MessageCompose from "../MessageCompose";
 import MessageHead from "../MessageHead";
 
 const Message = ({
-  user_profile,
+  user,
   peer_profile,
   peer,
   conversation,
@@ -21,7 +21,7 @@ const Message = ({
         style={{ gridTemplateRows: "min-content 1fr min-content" }}
         className="grid h-[100vh] w-full">
         <MessageHead {...peer_profile} />
-        {!loading && <MessageBody {...{ conversation, user_profile }} />}
+        {!loading && <MessageBody {...{ conversation, user }} />}
         {loading && peer && <LoadingWheel />}
         <MessageCompose {...{ message, setMessage, setOnSubmit }} />
       </div>
