@@ -7,7 +7,6 @@ const MessagesNavList = ({ message_list, peer_profile, peer_profiles, setPeer })
     setPeer(pubkey);
   };
   
-  console.log("profiles ", peer_profiles);
   return (
     <>
       <div className="p-3">

@@ -5,8 +5,8 @@ use postr::db::{self, SqlitePool};
 use postr::event::Event;
 use postr::socket::RelayPool;
 use postr::state::{PostrState, InnerState};
-use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__get_pubkey, __cmd__user_convos, __cmd__sub_to_msg_events, __cmd__send_dm};
-use postr::cmd::{user_profile, user_dms, get_pubkey, user_convos, sub_to_msg_events, send_dm};
+use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__get_pubkey, __cmd__user_convos, __cmd__sub_to_msg_events, __cmd__send_dm, __cmd__set_privkey};
+use postr::cmd::{user_profile, user_dms, get_pubkey, user_convos, sub_to_msg_events, send_dm, set_privkey};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use serde::{Deserialize, Serialize};
@@ -160,6 +160,7 @@ fn main() {
                 pubkey: "".to_string(),
             })))
             .invoke_handler(tauri::generate_handler![
+                set_privkey,
                 user_profile,
                 user_dms,
                 user_convos,

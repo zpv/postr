@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 
 Feed.getInitialProps = async (ctx) => {
   const privkey = ctx.query.privkey;
-  const user_pubkey = await invoke("to_pubkey", { privkey });
+  const user_pubkey = await invoke("get_pubkey");
   console.log(user_pubkey);
   const user_profile:any = await invoke("user_profile", { pubkey: user_pubkey }).catch(e => {
     return {

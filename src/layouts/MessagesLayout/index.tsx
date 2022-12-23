@@ -12,6 +12,9 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
   const [peer_profiles, setPeerProfiles] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // mapping of peer pubkey to message refs
+  const [message_refs, setMessageRefs] = useState({});
+
   const getMessages = async () => {
     return await invoke("user_convos", { privkey: user });
   };
@@ -27,6 +30,11 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
           profile.picture = `https://robohash.org/${message.peer}.png`;
         }
         profiles[message.peer] = profile;
+
+        // set up message refs to this message
+        if (!message_refs[message.peer]) {
+          message_refs[message.peer] = message;
+        }
       } catch {
         console.log("failed to get profile for ", message.peer);
 
@@ -44,7 +52,6 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
       .then((messages: any) => {
         return getProfiles(messages)
           .then((profiles) => {
-            console.log("conversation", messages);
             setMessageList(messages);
             setPeerProfiles(profiles);
             setLoading(false);
@@ -66,6 +73,7 @@ const MessagesLayout = ({ user_profile, user, peer, setPeer }) => {
       // event.payload is the payload object
       // refreshMessages();
       console.log(event);
+      console.log(message_refs);
       if (peer === event.payload.author || user_profile.pubkey === event.payload.author) {
         setConversation((prev) => [...prev, event.payload]);
       }

@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useState } from "react";
 
 const relayUrls = [
@@ -18,6 +19,15 @@ function App({ peer, setPeer, user, setUser }) {
           "6a0e6b709fb5239a3df637695764f153e56edccd48fa1c64916b8481d0ca3ab3",
       })
     );
+  }
+
+  const router = useRouter();
+
+  const launchApp = async () => {
+    await invoke("set_privkey", {privkey: user});
+    invoke("sub_to_msg_events")
+
+    router.push("/messages");
   }
 
   // const user = {
@@ -48,18 +58,11 @@ function App({ peer, setPeer, user, setUser }) {
           onChange={(e) => setUser(e.target.value)}
           placeholder="Enter private key"
         />
-        <Link href={"/messages?privkey=" + user}>
           <h2
             className="px-4 mx-2 cursor-pointer bg-neutral-800 hover:bg-slate-700 rounded-md"
-            onClick={(e) =>
-              invoke("sub_to_msg_events", {
-                privkey: user,
-              })
-            }
-          >
+            onClick={(e) =>{launchApp()}}>
             Launch
           </h2>
-        </Link>
       </div>
 
       <div className="flex p-5">
