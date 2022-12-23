@@ -36,7 +36,24 @@ pub struct UserProfile {
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[command]
-pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>) -> Result<UserProfile, String> {
+pub fn user_profile(pubkey: &str, pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>) -> Result<UserProfile, String> {
+    let filters = vec![
+            ReqFilter { 
+                ids: None,
+                kinds: Some([0].to_vec()),
+                since: None,
+                until: None,
+                authors: Some([pubkey.to_string()].to_vec()),
+                limit: Some(100),
+                tags: None,
+                force_no_match: false,
+            }
+        ];
+    
+    let req = Req::new(None, filters);
+    debug!("req: {:?}", req.to_string());
+    relay_pool.lock().unwrap().send(req.to_string());
+
     // get user profile from pubkey
     if let Ok(conn) = pool.get() {
         let mut statement = conn.prepare("SELECT * FROM users WHERE pubkey = ? AND is_current").unwrap();
