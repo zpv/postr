@@ -28,15 +28,15 @@ const getFormattedTime = (timestamp: number) => {
 };
 
 const MessagesNavListItem = ({
-  pubkey,
   nip05,
   last_message,
   picture,
   name,
+  peer
 }) => {
-  const display = name || (pubkey && pubkey.slice(0, 6)) || "";
+  const display = name || (peer && peer.slice(0, 6)) || "";
   const pubkey_truncated =
-    pubkey && pubkey.slice(0, 6) + "..." + pubkey.slice(-6);
+    peer && peer.slice(0, 6) + "..." + peer.slice(-6);
   const hover_text = (nip05 && "@" + nip05?.split("@")[1]) || pubkey_truncated;
   const [isHovering, setIsHovering] = useState(false);
 
@@ -56,7 +56,7 @@ const MessagesNavListItem = ({
   return (
     <>
       <img
-        src={picture}
+        src={picture || `https://robohash.org/${peer}.png`}
         className="rounded-lg h-12 mr-2 border-white border border-opacity-20"
       />
       <div className="grid grid-rows-2">
