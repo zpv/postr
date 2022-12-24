@@ -13,7 +13,14 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
   const [onSubmit, setOnSubmit] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // only invoke getMessages every 30 seconds
+  const [lastRefresh, setLastRefresh] = useState(0);
+
   const getMessages = async () => {
+    if (Date.now() - lastRefresh < 30_000) {
+      return message_list;
+    }
+    setLastRefresh(Date.now());
     return await invoke("user_convos");
   };
 

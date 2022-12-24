@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::time::Instant;
 
 use nostr_rust::Identity;
 use nostr_rust::events::EventPrepare;
@@ -12,6 +13,7 @@ use nostr_rust::nips::nip4::decrypt;
 use nostr_rust::nips::nip4::encrypt;
 use nostr_rust::utils::get_timestamp;
 use rusqlite::ToSql;
+use rusqlite::named_params;
 use serde_json::json;
 use tauri::Manager;
 use tokio::sync::broadcast;
@@ -144,40 +146,29 @@ pub fn user_convos(db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<A
     debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
 
-    debug!("Invoked user_convos with {:?}", identity.public_key_str);
+    info!("Invoked user_convos with {:?}", identity.public_key_str);
     if let Ok(conn) = db_pool.get() {
+        let start = Instant::now();
         let mut statement = conn.prepare(r##"
-        SELECT peer, MAX(last_message) last_message
-        FROM (
-          SELECT author AS peer,
+        SELECT 
+            CASE 
+                WHEN t.value_hex = :current_user THEN author 
+                ELSE t.value_hex 
+            END AS peer,
             MAX(created_at) last_message
-          FROM event e
+        FROM event e
             LEFT JOIN tag t ON e.id = t.event_id
-            WHERE kind = 4 AND t.name = 'p' AND t.value_hex = ?
-          GROUP BY t.value_hex, author
-
-          UNION ALL
-
-          SELECT t.value_hex AS peer,
-            MAX(created_at) last_message
-          FROM event e
-            LEFT JOIN tag t ON e.id = t.event_id
-          WHERE kind = 4
-            AND t.name = 'p'
-            AND author = ?
-          GROUP BY t.value_hex, author
-        )
+            WHERE kind = 4 
+                AND t.name = 'p' 
+                AND (t.value_hex = :current_user OR author = :current_user)
         GROUP BY peer
+    
         "##).unwrap();
 
-        let mut params: Vec<Box<dyn ToSql>> = vec![];        
+        let h = hex::decode(identity.public_key_str).unwrap();
+        let params = named_params! { ":current_user": Box::new(h.clone())};
 
-        if let Ok(h) = hex::decode(identity.public_key_str) {
-            params.push(Box::new(h.clone()));
-            params.push(Box::new(h));
-        }
-
-        let mut users = statement.query_map(rusqlite::params_from_iter(params), |row| {
+        let mut users = statement.query_map(params, |row| {
             let peer_pubkey: Vec<u8> = row.get(0)?;
             let last_message: i64 = row.get(1)?;
 
@@ -197,6 +188,7 @@ pub fn user_convos(db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<A
         result.sort_by(|a, b| b.last_message.cmp(&a.last_message));
 
         debug!("result: {:?}", result);
+        info!("query ran in {:?}", start.elapsed());
 
         Ok(result)
     } else {
