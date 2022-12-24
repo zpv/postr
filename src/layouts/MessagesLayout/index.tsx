@@ -176,7 +176,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
           });
         }
         const switchConversation = async () => {
-          return await invoke("user_dms", { peer, limit: 100 });
+          return await invoke("user_dms", { peer, limit: 20 });
         };
         switchConversation()
           .then((r: any) => {
@@ -193,7 +193,6 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
   }, [peer]);
 
   useEffect(() => {
-    console.log(profiles);
     if (onSubmit && message !== "") {
       const sendMessage = async () => {
         return await invoke("send_dm", { peer, message });
@@ -233,6 +232,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
           message,
           setMessage,
           setOnSubmit,
+          setConversation,
         }}
       />
     </>

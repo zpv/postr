@@ -14,6 +14,7 @@ const Message = ({
   message,
   setMessage,
   setOnSubmit,
+  setConversation
 }) => {
   const messageBody = (
     <>
@@ -21,7 +22,7 @@ const Message = ({
         style={{ gridTemplateRows: "min-content 1fr min-content" }}
         className="grid h-[100vh] w-full">
         <MessageHead {...peer_profile} />
-        {!loading && <MessageBody {...{ conversation, user }} />}
+        {!loading && <MessageBody {...{ conversation, user, setConversation, peer }} />}
         {loading && peer && <LoadingWheel />}
         <MessageCompose {...{ message, setMessage, setOnSubmit }} />
       </div>
