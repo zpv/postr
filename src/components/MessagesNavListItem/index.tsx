@@ -35,7 +35,8 @@ const MessagesNavListItem = ({
   name,
 }) => {
   const display = name || (pubkey && pubkey.slice(0, 6)) || "";
-  const pubkey_truncated = pubkey.slice(0, 6) + "..." + pubkey.slice(-6);
+  const pubkey_truncated =
+    pubkey && pubkey.slice(0, 6) + "..." + pubkey.slice(-6);
   const hover_text = (nip05 && "@" + nip05?.split("@")[1]) || pubkey_truncated;
   const [isHovering, setIsHovering] = useState(false);
 

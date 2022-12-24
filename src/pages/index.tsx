@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha256";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -76,6 +77,21 @@ function App() {
           }}
         >
           Launch with default private key
+        </h2>
+      </div>
+
+      <div className="flex p-5">
+        <h2
+          className="rounded-lg px-2 bg-neutral-800 hover:bg-slate-700 cursor-pointer"
+          onClick={(e) => {
+            const random = Buffer.from(
+              sha256(Math.random().toString())
+            ).toString("hex");
+
+            launchApp(random);
+          }}
+        >
+          Launch with random private key
         </h2>
       </div>
 

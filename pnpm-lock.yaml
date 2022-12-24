@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@noble/hashes': ^1.1.5
   '@nostrgg/react': ^0.1.2
   '@tauri-apps/api': ^1.2.0
   '@tauri-apps/cli': ^1.2.2
@@ -12,16 +13,19 @@ specifiers:
   postcss: ^8.4.20
   react: ^18.2.0
   react-dom: ^18.2.0
+  sha256: link:@noble/hashes/sha256
   tailwindcss: ^3.2.4
   tailwindcss-ripple: ^0.7.1
   typescript: ^4.7.4
 
 dependencies:
+  '@noble/hashes': 1.1.5
   '@nostrgg/react': 0.1.2_react@18.2.0
   '@tauri-apps/api': 1.2.0
   next: 12.3.4_biqbaboplfbrettd7655fr4n2y
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
+  sha256: link:@noble/hashes/sha256
   tailwindcss-ripple: 0.7.1
 
 devDependencies:
@@ -156,6 +160,10 @@ packages:
     requiresBuild: true
     dev: false
     optional: true
+
+  /@noble/hashes/1.1.5:
+    resolution: {integrity: sha512-LTMZiiLc+V4v1Yi16TD6aX2gmtKszNye0pQgbaLqkvhIqP7nVsSaJsWloGQjJfJ8offaoP5GtX3yY5swbcJxxQ==}
+    dev: false
 
   /@noble/secp256k1/1.7.0:
     resolution: {integrity: sha512-kbacwGSsH/CTout0ZnZWxnW1B+jH/7r/WAAKLBtrRJ/+CUH7lgmQzl3GTrQua3SGKWNSDsS6lmjnDpIJ5Dxyaw==}

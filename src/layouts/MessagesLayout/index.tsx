@@ -39,6 +39,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
         return {
           picture: `https://robohash.org/${pubkey}.png`,
           pubkey: pubkey,
+          failed: true,
         };
       });
   };
@@ -57,7 +58,9 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
         return getProfiles(messages)
           .then((profiles) => {
             setMessageList(messages);
-            setProfiles(profiles);
+            setProfiles((prev) => {
+              return { ...prev, ...profiles };
+            });
             setLoading(false);
           })
           .catch((e) => {
@@ -164,19 +167,28 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
   useEffect(() => {
     setLoading(true);
     if (peer !== "") {
-      const switchConversation = async () => {
-        return await invoke("user_dms", { peer });
-      };
-      switchConversation()
-        .then((r: any) => {
-          setLoading(false);
-          setConversation(r);
-        })
-        .catch((e) => {
-          setLoading(false);
-          setConversation([]);
-          console.log(e);
-        });
+      (async () => {
+        if (!profiles[peer] || profiles[peer].failed) {
+          const profile = await getProfile(peer);
+          console.log("PROFILE FOR PEER NOT FOUND", profile);
+          setProfiles((prev) => {
+            return { ...prev, [peer]: profile };
+          });
+        }
+        const switchConversation = async () => {
+          return await invoke("user_dms", { peer });
+        };
+        switchConversation()
+          .then((r: any) => {
+            setLoading(false);
+            setConversation(r);
+          })
+          .catch((e) => {
+            setLoading(false);
+            setConversation([]);
+            console.log(e);
+          });
+      })();
     }
   }, [peer]);
 
