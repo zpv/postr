@@ -1,5 +1,4 @@
 import { useState } from "react";
-import MessagesNavHead from "../MessagesNavHead";
 import MessagesNavListItem from "../MessagesNavListItem";
 
 const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
@@ -21,10 +20,8 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
         />
       </div>
 
-      
-      <div className="overflow-y-scroll h-full">
+      <div className="overflow-y-auto h-full">
         {message_list.map((msg) => {
-
           if (searchFilter !== "") {
             if (
               !profiles[msg.peer]?.name
@@ -52,7 +49,8 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
                 (peer && msg.peer === peer
                   ? "bg-neutral-900 border-r-2"
                   : "hover:bg-neutral-900")
-              }>
+              }
+            >
               <MessagesNavListItem {...profiles[msg.peer]} {...msg} />
             </div>
           );

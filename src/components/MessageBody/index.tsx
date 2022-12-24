@@ -1,4 +1,4 @@
-import { createRef, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import MessageBodyItem from "../MessageBodyItem";
 
 const MessageBody = ({ conversation, user }) => {
@@ -15,7 +15,8 @@ const MessageBody = ({ conversation, user }) => {
     <>
       <div
         ref={messageRef}
-        className="py-5 w-full overflow-y-scroll overflow-x-hidden h-full">
+        className="py-5 w-full overflow-y-auto overflow-x-hidden h-full"
+      >
         {conversation.map((message_content) => {
           return <MessageBodyItem {...message_content} {...{ user }} />;
         })}
