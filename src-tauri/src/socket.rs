@@ -172,7 +172,7 @@ impl RelaySocket {
                                         }
                                     }
                                     NostrMessage::EOSEMsg(eose) => {
-                                        info!("received EOSE message: {:?}", eose);
+                                        info!("received EOSE message from relay {:?}: {:?}", relay, eose);
                                         if eose.cmd != "EOSE" {
                                             error!("received EOSE message with invalid command: {:?}", eose.cmd);
                                             continue;
