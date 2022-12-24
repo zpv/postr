@@ -49,7 +49,7 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
         >
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search... (nip05, pubkey, name)"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             className="rounded-sm w-full bg-neutral-800 px-2 placeholder-neutral-500 focus:placeholder-opacity-0"

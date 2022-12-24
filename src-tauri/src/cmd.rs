@@ -210,7 +210,7 @@ pub struct PrivateMessageWithRecipient {
 }
 
 #[command]
-pub fn user_dms(peer: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState> ) -> Result<Vec<PrivateMessageWithRecipient>, String> {
+pub fn user_dms(peer: &str, limit: Option<u64>, until: Option<u64>, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState> ) -> Result<Vec<PrivateMessageWithRecipient>, String> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
     let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
@@ -222,9 +222,15 @@ pub fn user_dms(peer: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri
                 ids: None,
                 kinds: Some([4].to_vec()),
                 since: None,
-                until: None,
+                until: match until {
+                    Some(u) => Some(u),
+                    None => None
+                },
                 authors: Some([identity.public_key_str.clone()].to_vec()),
-                limit: Some(100),
+                limit: match limit {
+                    Some(l) => Some(l),
+                    None => Some(100)
+                },
                 tags: Some(
                     HashMap::from([('p', HashSet::from([x_pub_key.to_string()]))])
                 ),
@@ -235,9 +241,15 @@ pub fn user_dms(peer: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri
                 ids: None,
                 kinds: Some([4].to_vec()),
                 since: None,
-                until: None,
+                until: match until {
+                    Some(u) => Some(u),
+                    None => None
+                },
                 authors: Some([x_pub_key.to_string()].to_vec()),
-                limit: Some(100),
+                limit: match limit {
+                    Some(l) => Some(l),
+                    None => Some(100)
+                },
                 tags: Some(
                     HashMap::from([('p', HashSet::from([identity.public_key_str.clone()]))])
                 ),
