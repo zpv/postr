@@ -174,6 +174,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
   }, [peer]);
 
   useEffect(() => {
+    console.log(profiles);
     if (onSubmit && message !== "") {
       const sendMessage = async () => {
         return await invoke("send_dm", { peer, message });
@@ -198,7 +199,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
       <MessagesNav
         {...{
           message_list,
-          peer_profile: profiles[peer],
+          peer,
           profiles,
           setPeer,
         }}

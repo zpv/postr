@@ -1,5 +1,6 @@
 import { l } from "@tauri-apps/api/fs-4bb77382";
 import { useState } from "react";
+import verifIcon from "../../assets/verif.png";
 
 const getFormattedTime = (timestamp:number) => {
   const date = new Date(timestamp * 1000);
@@ -27,9 +28,12 @@ const getFormattedTime = (timestamp:number) => {
   }
 };
 
-const MessagesNavListItem = ({ pubkey, last_message, picture, name }) => {
+const MessagesNavListItem = ({ pubkey, nip05, last_message, picture, name }) => {
   const display = name || (pubkey && pubkey.slice(0, 6)) || "";
+  const hover_text = ((nip05 && "@" + nip05?.split("@")[1]) || pubkey);
   const [isHovering, setIsHovering] = useState(false);
+
+  const verif = verifIcon;
 
   // last_message is a temporarily? a unix timestamp
   last_message = getFormattedTime(last_message);
@@ -49,14 +53,16 @@ const MessagesNavListItem = ({ pubkey, last_message, picture, name }) => {
         className="rounded-lg h-12 mr-2 border-white border border-opacity-20"
       />
       <div className="grid grid-rows-2">
-        <h1
-          // onMouseOver={handleMouseOver}
-          // onMouseOut={handleMouseOut}
-          className="truncate overflow-hidden"
+        <div
+          onMouseOver={handleMouseOver}
+          onMouseOut={handleMouseOut}
+          style={{ gridTemplateRows: "1fr" }}
+          className={"flex flex-row"}
         >
-          {/* {isHovering && pubkey} */}
-          {!isHovering && display}
-        </h1>
+          {isHovering && <h1 className="">{hover_text}</h1>}
+          {isHovering && nip05 && <img src={verif.src} className="h-3 w-3 my-auto opacity-20"></img>}
+          {!isHovering && <h1>{display}</h1>}
+        </div>
         <p className="text-neutral-500 truncate overflow-hidden text-xs">
           {last_message}
         </p>

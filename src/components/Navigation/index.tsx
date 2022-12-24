@@ -4,7 +4,6 @@ import activity from "../../assets/nav_activity.png";
 import message from "../../assets/nav_message.png";
 
 const Navigation = ({ user_profile, tab }) => {
-  const { picture, name, pubkey } = user_profile;
   const buttons = [
     {
       name: "Messages",
@@ -16,16 +15,16 @@ const Navigation = ({ user_profile, tab }) => {
       icon: activity,
       href: "/feed",
     },
-  ]
+  ];
 
   return (
     <>
-        <div className="bg-black border-gray-600 border-r h-[100vh]">
-            <NavigationHead {...{picture, pubkey, name}}/>
-            {buttons.map((button) => (
-                <NavigationButton {...button} {...{tab}}/>
-            ))}
-        </div>
+      <div className="bg-black border-gray-600 border-r h-[100vh]">
+        <NavigationHead {...user_profile} />
+        {buttons.map((button) => (
+          <NavigationButton {...button} {...{ tab }} />
+        ))}
+      </div>
     </>
   );
 };

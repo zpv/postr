@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const NavigationHead = ({ picture, pubkey, name }) => {
+const NavigationHead = ({ picture, nip05, pubkey, name }) => {
   const [isHovering, setIsHovering] = useState(false);
   const display_name = name || (pubkey && pubkey.slice(0, 6)) || "";
 
@@ -31,7 +31,7 @@ const NavigationHead = ({ picture, pubkey, name }) => {
             onMouseOut={handleMouseOut}
             onClick={copyToClipboard}
           >
-            {isHovering && pubkey}
+            {isHovering && ((nip05 && "@" + nip05?.split("@")[1]) || pubkey)}
             {!isHovering && display_name}
           </h1>
           <h2 className="mx-2 text-neutral-600">View profile</h2>
