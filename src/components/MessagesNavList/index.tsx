@@ -19,26 +19,25 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
       setPeer(searchFilter);
     } else {
       for (let i = 0; i < message_list.length; i++) {
-        if (
-          profiles[message_list[i].peer]?.name
-            ?.toLowerCase()
-            .includes(searchFilter.toLowerCase()) ||
-          profiles[message_list[i].peer]?.pubkey
-            ?.toLowerCase()
-            .includes(searchFilter.toLowerCase()) ||
-          profiles[message_list[i].peer]?.nip05
-            ?.toLowerCase()
-            .includes(searchFilter.toLowerCase()) ||
-          profiles[message_list[i].peer]?.nip05
-            ?.toLowerCase()
-            .split("@")[1]
-            .includes(searchFilter.toLowerCase())
-        ) {
+        if (!filteredOut(message_list[i])) {
           setPeer(message_list[i].peer);
           break;
         }
       }
     }
+  };
+
+  const filteredOut = (msg) => {
+    const { name, pubkey, nip05 } = profiles[msg.peer];
+
+    return (
+      !name?.toLowerCase().startsWith(searchFilter.toLowerCase()) &&
+      !pubkey?.toLowerCase().startsWith(searchFilter.toLowerCase()) &&
+      !nip05?.toLowerCase().startsWith(searchFilter.toLowerCase()) &&
+      !(nip05 && "@" + nip05.toLowerCase().split("@")[1])?.startsWith(
+        searchFilter.toLowerCase()
+      )
+    );
   };
 
   return (
@@ -61,21 +60,7 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
       <div className="overflow-y-auto h-full">
         {message_list.map((msg) => {
           if (searchFilter !== "") {
-            if (
-              !profiles[msg.peer]?.name
-                ?.toLowerCase()
-                .includes(searchFilter.toLowerCase()) &&
-              !profiles[msg.peer]?.pubkey
-                ?.toLowerCase()
-                .includes(searchFilter.toLowerCase()) &&
-              !profiles[msg.peer]?.nip05
-                ?.toLowerCase()
-                .includes(searchFilter.toLowerCase()) &&
-              !profiles[msg.peer]?.nip05
-                ?.toLowerCase()
-                .split("@")[1]
-                .includes(searchFilter.toLowerCase())
-            ) {
+            if (filteredOut(msg)) {
               return <></>;
             }
           }
