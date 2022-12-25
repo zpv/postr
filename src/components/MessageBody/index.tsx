@@ -66,7 +66,7 @@ const MessageBody = ({ conversation, user, setConversation, peer }) => {
         invoke("user_dms", {
           peer,
           until: until,
-          limit: 20,
+          limit: 40,
         }).then((r: any) => {
           // wait 5 secs to simulate lag
           // setTimeout(() => {
