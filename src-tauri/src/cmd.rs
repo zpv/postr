@@ -311,6 +311,8 @@ pub fn user_dms(peer: &str, limit: Option<u64>, until: Option<u64>, db_pool: tau
 
         debug!("result: {:?}", result);
         result.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        result = result.into_iter().rev().take(limit.unwrap_or(100) as usize).rev().collect::<Vec<PrivateMessageWithRecipient>>();
+
         Ok(result)
     } else {
         Err("no user".to_string())

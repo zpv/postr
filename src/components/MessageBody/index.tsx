@@ -71,10 +71,10 @@ const MessageBody = ({ conversation, user, setConversation, peer }) => {
           // wait 5 secs to simulate lag
           // setTimeout(() => {
           setConversation((prev) => {
-            console.log("fetching done")
+            console.log("fetching done");
             // check if prev is the same peer or last timestamp is behind of r[0] timestamp
             if (!r[0] || !prev[0] || (prev[0].author !== peer && prev[0].recipient !== peer)
-              || prev[0].timestamp < r[0].timestamp) {
+              || prev[0].timestamp < r[r.length - 1].timestamp) {
               console.log("no more or not same peer");
               return [...prev];
             }

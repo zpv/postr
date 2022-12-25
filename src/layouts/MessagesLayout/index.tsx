@@ -176,7 +176,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
           });
         }
         const switchConversation = async () => {
-          return await invoke("user_dms", { peer, limit: 20 });
+          return await invoke("user_dms", { peer, limit: 40 });
         };
         switchConversation()
           .then((r: any) => {
