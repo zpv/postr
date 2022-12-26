@@ -1,57 +1,15 @@
-import { useState } from "react";
 import verifIcon from "../../assets/verif.png";
+import getFormattedMsgRecvTime from "../../helpers/timeHelpers";
 
-const getFormattedTime = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-  const today = new Date();
-  const seven_days_ago = new Date(today);
-  seven_days_ago.setDate(seven_days_ago.getDate() - 7);
-
-  if (date.toDateString() === today.toDateString()) {
-    return date
-      .toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "numeric",
-        hour12: true,
-      })
-      .replace(/^0/, "");
-  } else if (date > seven_days_ago) {
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-    });
-  } else {
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  }
-};
-
-const MessagesNavListItem = ({
-  nip05,
-  last_message,
-  picture,
-  name,
-  peer
-}) => {
+const MessagesNavListItem = ({ nip05, last_message, picture, name, peer }) => {
   const display = name || (peer && peer.slice(0, 6)) || "";
-  const pubkey_truncated =
-    peer && peer.slice(0, 6) + "..." + peer.slice(-6);
+  const pubkey_truncated = peer && peer.slice(0, 6) + "..." + peer.slice(-6);
   const hover_text = (nip05 && "@" + nip05?.split("@")[1]) || pubkey_truncated;
-  const [isHovering, setIsHovering] = useState(false);
 
   const verif = verifIcon;
 
   // last_message is a temporarily? a unix timestamp
-  last_message = getFormattedTime(last_message);
-
-  function handleMouseOver() {
-    setIsHovering(true);
-  }
-
-  function handleMouseOut() {
-    setIsHovering(false);
-  }
+  last_message = getFormattedMsgRecvTime(last_message);
 
   return (
     <>
@@ -61,17 +19,20 @@ const MessagesNavListItem = ({
       />
       <div className="grid grid-rows-2">
         <div
-          onMouseOver={handleMouseOver}
-          onMouseOut={handleMouseOut}
           style={{ gridTemplateRows: "1fr" }}
-          className={"flex flex-row"}
-        >
-          {isHovering && (
-            <h1 className="text-gray-400 truncate">{hover_text}</h1>
-          )}
-          {!isHovering && <h1>{display}</h1>}
-          {!isHovering && nip05 && (
-            <img src={verif.src} className="h-3 w-3 my-auto opacity-20 ml-1" />
+          className={"flex flex-row group"}>
+          {/* if mouse hovers over -> show */}
+          <h1 className="hidden group-hover:inline text-gray-400 truncate">
+            {hover_text}
+          </h1>
+
+          {/* if mouse hovers over -> hide */}
+          <h1 className="group-hover:hidden">{display}</h1>
+          {nip05 && (
+            <img
+              src={verif.src}
+              className="group-hover:hidden h-3 w-3 my-auto opacity-20 ml-1"
+            />
           )}
         </div>
         <p className="text-neutral-500 truncate overflow-hidden text-xs">

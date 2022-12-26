@@ -6,21 +6,16 @@ import Message from "../../components/Message";
 
 import MessagesNav from "../../components/MessagesNav";
 
-const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
+const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefresh, setLastRefresh, message_list, setMessageList }) => {
   const [message, setMessage] = useState("");
   const [conversation, setConversation] = useState([]);
-  const [message_list, setMessageList] = useState([]);
   const [onSubmit, setOnSubmit] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  // only invoke getMessages every 30 seconds
-  const [lastRefresh, setLastRefresh] = useState(0);
 
   const getMessages = async () => {
     if (Date.now() - lastRefresh < 30_000) {
       return message_list;
     }
-    setLastRefresh(Date.now());
     return await invoke("user_convos");
   };
 
@@ -45,11 +40,14 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
   };
 
   const getProfiles = async (messages) => {
-    const profiles = {};
-    for (const message of messages) {
-      profiles[message.peer] = await getProfile(message.peer);
+    if (Date.now() - lastRefresh < 30_000) {
+      return message_list;
     }
-    return profiles;
+    const res = profiles;
+    for (const message of messages) {
+      res[message.peer] = await getProfile(message.peer);
+    }
+    return res;
   };
 
   const refreshMessages = () =>
@@ -61,7 +59,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
             setProfiles((prev) => {
               return { ...prev, ...profiles };
             });
-            setLoading(false);
+            setLastRefresh(Date.now());
           })
           .catch((e) => {
             console.log(e);
@@ -165,12 +163,12 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles }) => {
   }, [peer]);
 
   useEffect(() => {
-    setLoading(true);
     if (peer !== "") {
+      setLoading(true);
       (async () => {
         if (!profiles[peer] || profiles[peer].failed) {
           const profile = await getProfile(peer);
-          console.log("PROFILE FOR PEER NOT FOUND", profile);
+          console.log("using default profile for ", profile);
           setProfiles((prev) => {
             return { ...prev, [peer]: profile };
           });

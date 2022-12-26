@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useRef, useState } from "react";
+import { getFormattedTimeStr } from "../../helpers/timeHelpers";
 import MessageBodyItem from "../MessageBodyItem";
 
 const MessageBody = ({ conversation, user, setConversation, peer }) => {
@@ -36,7 +37,6 @@ const MessageBody = ({ conversation, user, setConversation, peer }) => {
   // }, [conversation]);
 
   useEffect(() => {
-    
     // if first load, scroll to bottom
     if (isFirstLoad) {
       setFirstLoad(false);
@@ -60,7 +60,7 @@ const MessageBody = ({ conversation, user, setConversation, peer }) => {
       }
       // if scroll to top, load more messages
       else if (element.scrollTop === 0 && !isFetching) {
-        console.log("fetching more")
+        console.log("fetching more");
         isFetching = true;
         setCurrentScroll(element.scrollHeight);
         invoke("user_dms", {
@@ -73,8 +73,12 @@ const MessageBody = ({ conversation, user, setConversation, peer }) => {
           setConversation((prev) => {
             console.log("fetching done");
             // check if prev is the same peer or last timestamp is behind of r[0] timestamp
-            if (!r[0] || !prev[0] || (prev[0].author !== peer && prev[0].recipient !== peer)
-              || prev[0].timestamp < r[r.length - 1].timestamp) {
+            if (
+              !r[0] ||
+              !prev[0] ||
+              (prev[0].author !== peer && prev[0].recipient !== peer) ||
+              prev[0].timestamp < r[r.length - 1].timestamp
+            ) {
               console.log("no more or not same peer");
               return [...prev];
             }
@@ -105,14 +109,65 @@ const MessageBody = ({ conversation, user, setConversation, peer }) => {
     };
   }, [conversation]);
 
+  // flag to round message bubble corners
+  let rounded_top = true;
+
+  // message body but insert timestamp if messages are more than 5 mins apart
+  // message_content.timestamp is in unix time
+
+  const messageBody = conversation.map((message_content, i) => {
+    // insert timestamp if two consecutive messages are more than 1 hour apart
+    const insertTimestamp =
+      i === 0 ||
+      (i !== conversation.length - 1 &&
+        message_content.timestamp - conversation[i - 1].timestamp > 60 * 60);
+
+    if (insertTimestamp) {
+      var timeStr = getFormattedTimeStr(message_content.timestamp);
+    }
+
+    // add spacer element if two consecutive messages are more than 1 min apart
+    const insertSpacer =
+      i !== conversation.length - 1 &&
+      conversation[i + 1].timestamp - message_content.timestamp > 60;
+
+    // rounded bottom corner logic
+    const rounded_bottom =
+      insertSpacer ||
+      i === conversation.length - 1 ||
+      (i !== conversation.length - 1 &&
+        message_content.author !== conversation[i + 1].author);
+
+    // construct message body item
+    const messageBodyItem = (
+      <MessageBodyItem
+        {...message_content}
+        {...{ user }}
+        rounded_bottom={rounded_bottom}
+        rounded_top={rounded_top}
+      />
+    );
+
+    // update rounded_top for next message
+    rounded_top = rounded_bottom;
+
+    return (
+      <>
+        {insertTimestamp && (
+          <div className="text-center text-neutral-400 text-xs">{timeStr}</div>
+        )}
+        {messageBodyItem}
+        {insertSpacer && <div className="h-2"></div>}
+      </>
+    );
+  });
+
   return (
     <>
       <div
         ref={messageRef}
         className="py-5 w-full overflow-y-auto overflow-x-hidden h-full">
-        {conversation.map((message_content) => {
-          return <MessageBodyItem {...message_content} {...{ user }} />;
-        })}
+        {messageBody}
       </div>
     </>
   );

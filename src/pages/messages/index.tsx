@@ -4,19 +4,21 @@ import { invoke } from "@tauri-apps/api/tauri";
 import Layout from "../../layouts/Layout";
 
 Messages.getInitialProps = async (ctx) => {
-  const user_pubkey:string = await invoke("get_pubkey");
-  const user_profile:any = await invoke("user_profile", { pubkey: user_pubkey }).catch(e => {
+  const user_pubkey: string = await invoke("get_pubkey");
+  const user_profile: any = await invoke("user_profile", {
+    pubkey: user_pubkey,
+  }).catch((e) => {
     return {
       picture: `https://robohash.org/${user_pubkey}.png`,
-      pubkey: user_pubkey
-    }
-  })
+      pubkey: user_pubkey,
+    };
+  });
 
   if (!user_profile.picture) {
     user_profile.picture = `https://robohash.org/${user_pubkey}.png`;
   }
 
-  return { user: user_pubkey, user_profile }
+  return { user: user_pubkey, user_profile };
 };
 
 function Messages({
@@ -26,6 +28,10 @@ function Messages({
   setPeer,
   profiles,
   setProfiles,
+  lastRefresh,
+  setLastRefresh,
+  message_list,
+  setMessageList,
 }) {
   // rudimentary state lol
   const tab = "Messages";
@@ -35,11 +41,13 @@ function Messages({
   }
 
   return (
-    <Layout {...{ user_profile }} {...{ tab }}>
-      <MessagesLayout
-        {...{ user, profiles, setProfiles, peer, setPeer }}
-      />
-    </Layout>
+    <div className="bg-neutral-900 w-full h-full overflow-hidden">
+      <div className="grid grid-cols-[180px_240px_1fr] h-full">
+        <Layout {...{ user_profile }} {...{ tab }}>
+          <MessagesLayout {...{ user, profiles, setProfiles, peer, setPeer, lastRefresh, setLastRefresh, message_list, setMessageList }} />
+        </Layout>
+      </div>
+    </div>
   );
 }
 
