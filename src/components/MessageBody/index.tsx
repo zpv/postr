@@ -119,8 +119,7 @@ const MessageBody = ({ conversation, user, setConversation, peer }) => {
     // insert timestamp if two consecutive messages are more than 1 hour apart
     const insertTimestamp =
       i === 0 ||
-      (i !== conversation.length - 1 &&
-        message_content.timestamp - conversation[i - 1].timestamp > 60 * 60);
+      message_content.timestamp - conversation[i - 1].timestamp > 60 * 60;
 
     if (insertTimestamp) {
       var timeStr = getFormattedTimeStr(message_content.timestamp);

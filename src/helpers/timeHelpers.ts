@@ -54,7 +54,7 @@ const getFormattedTimeStr = (timestamp: number) => {
   }
 
   if (date.toDateString() === today.toDateString()) {
-    timeStr = "Today, " + timeStr;
+    return timeStr;
   } else if (date.toDateString() === yesterday.toDateString()) {
     timeStr = "Yesterday, " + timeStr;
   } else if (date > seven_days_ago) {
