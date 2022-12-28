@@ -19,7 +19,7 @@ const Navigation = ({ user_profile, tab }) => {
 
   return (
     <>
-      <div className="bg-black border-gray-600 border-r h-[100vh]">
+      <div className="bg-black border-neutral-600 border-r h-[100vh]">
         <NavigationHead {...user_profile} />
         {buttons.map((button) => (
           <NavigationButton {...button} {...{ tab }} />

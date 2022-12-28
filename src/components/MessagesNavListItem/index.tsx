@@ -15,19 +15,19 @@ const MessagesNavListItem = ({ nip05, last_message, picture, name, peer }) => {
     <>
       <img
         src={picture || `https://robohash.org/${peer}.png`}
-        className="rounded-lg h-12 mr-2 border-white border border-opacity-20"
+        className="rounded-lg h-12 mr-2 border-white border border-opacity-20 bg-neutral-900"
       />
-      <div className="grid grid-rows-2">
+      <div className="grid grid-rows-2 w-full">
         <div
           style={{ gridTemplateRows: "1fr" }}
-          className={"flex flex-row group"}>
+          className={"flex flex-row group w-[160px]"}>
           {/* if mouse hovers over -> show */}
-          <h1 className="hidden group-hover:inline text-gray-400 truncate">
-            {hover_text}
-          </h1>
+            <h1 className="text-gray-400 truncate hidden group-hover:inline">{hover_text}</h1>
 
           {/* if mouse hovers over -> hide */}
-          <h1 className="group-hover:hidden">{display}</h1>
+          <h1 className="group-hover:hidden truncate overflow-ellipsis">
+            {display}
+          </h1>
           {nip05 && (
             <img
               src={verif.src}

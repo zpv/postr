@@ -1,23 +1,22 @@
-import { useState } from "react";
-import MessagesLayout from "../../layouts/MessagesLayout";
 import { invoke } from "@tauri-apps/api/tauri";
+import EditProfileLayout from "../../layouts/EditProfileLayout";
 import Layout from "../../layouts/Layout";
 
-Messages.getInitialProps = async (ctx) => {
+EditProfile.getInitialProps = async (ctx) => {
   const user_pubkey: string = await invoke("get_pubkey");
   const user_profile: any = await invoke("user_profile", {
     pubkey: user_pubkey,
   }).catch((e) => {
     return {
       pubkey: user_pubkey,
-      failed: true
+      failed: true,
     };
   });
 
   return { user: user_pubkey, user_profile };
 };
 
-function Messages({
+function EditProfile({
   user,
   user_profile,
   peer,
@@ -29,8 +28,7 @@ function Messages({
   message_list,
   setMessageList,
 }) {
-  // rudimentary state lol
-  const tab = "Messages";
+  const tab = "none";
 
   if (!profiles[user_profile?.pubkey] || profiles[user_profile?.pubkey]?.failed) {
     profiles[user_profile?.pubkey] = user_profile;
@@ -40,20 +38,10 @@ function Messages({
 
   return (
     <div className="bg-neutral-900 w-full h-full overflow-hidden">
-      <div className="grid grid-cols-[180px_240px_1fr] h-full">
+      <div className="grid grid-cols-[180px_1fr] h-full">
         <Layout {...{ user_profile }} {...{ tab }}>
-          <MessagesLayout
-            {...{
-              user,
-              profiles,
-              setProfiles,
-              peer,
-              setPeer,
-              lastRefresh,
-              setLastRefresh,
-              message_list,
-              setMessageList,
-            }}
+          <EditProfileLayout
+            {...{ user_profile, setProfiles, setLastRefresh, setPeer, setMessageList }}
           />
         </Layout>
       </div>
@@ -61,4 +49,4 @@ function Messages({
   );
 }
 
-export default Messages;
+export default EditProfile;

@@ -24,15 +24,11 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
       pubkey: pubkey,
     })
       .then((r: any) => {
-        if (!r.picture) {
-          r.picture = `https://robohash.org/${pubkey}.png`;
-        }
         return r;
       })
       .catch((e) => {
         console.log(`getProfile error (${e}) for: `, pubkey);
         return {
-          picture: `https://robohash.org/${pubkey}.png`,
           pubkey: pubkey,
           failed: true,
         };
@@ -42,6 +38,8 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
   const getProfiles = async (messages) => {
     if (Date.now() - lastRefresh < 30_000) {
       return message_list;
+    } else {
+      setLastRefresh(Date.now());
     }
     const res = profiles;
     for (const message of messages) {
@@ -59,7 +57,6 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
             setProfiles((prev) => {
               return { ...prev, ...profiles };
             });
-            setLastRefresh(Date.now());
           })
           .catch((e) => {
             console.log(e);
@@ -82,6 +79,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
         setConversation((prev) => [...prev, event.payload]);
       }
 
+      console.log(event)
       // everything below here is to update message list
 
       // setup profile if it doesn't exist

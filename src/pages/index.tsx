@@ -26,7 +26,7 @@ function App() {
 
   const launchApp = async (privkey: string) => {
     await invoke("set_privkey", { privkey });
-    invoke("sub_to_msg_events");
+    invoke("sub_to_msg_events")
 
     router.push("/messages");
   };

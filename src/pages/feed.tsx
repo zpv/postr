@@ -9,14 +9,10 @@ Feed.getInitialProps = async (ctx) => {
     pubkey: user_pubkey,
   }).catch((e) => {
     return {
-      picture: `https://robohash.org/${user_pubkey}.png`,
       pubkey: user_pubkey,
+      failed: true,
     };
   });
-
-  if (!user_profile.picture) {
-    user_profile.picture = `https://robohash.org/${user_pubkey}.png`;
-  }
 
   return { user_profile };
 };

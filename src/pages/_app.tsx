@@ -11,7 +11,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   const [message_list, setMessageList] = useState([]);
 
   // only invoke getMessages every 30 seconds
-  const [lastRefresh, setLastRefresh] = useState(0);
+  const [lastRefresh, setLastRefresh] = useState(Date.now() - 999_999);
 
   return (
     <Component

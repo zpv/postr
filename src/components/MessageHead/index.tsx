@@ -7,7 +7,7 @@ const MessageHead = ({ pubkey, name, picture, nip05, peer }) => {
   const hover_text = peer.slice(0, 10) + "..." + peer.slice(-10);
 
   const copyToClipboard = async () => {
-    await navigator.clipboard.writeText(pubkey);
+    await navigator.clipboard.writeText(peer);
   };
 
   return (
@@ -17,7 +17,7 @@ const MessageHead = ({ pubkey, name, picture, nip05, peer }) => {
           className="cursor-pointer flex flex-row hover:ripple-bg-neutral-700"
           onClick={copyToClipboard}>
           <img
-            src={picture}
+            src={picture || `https://robohash.org/${peer}.png`}
             alt="profile"
             className="rounded-lg w-10 h-10 m-3 border border-white border-opacity-20"
           />
@@ -50,7 +50,7 @@ const MessageHead = ({ pubkey, name, picture, nip05, peer }) => {
         <div className="flex flex-row w-full justify-end">
           <div className="my-auto p-2 mx-3 cursor-pointer hover:ripple-bg-neutral-700 rounded-lg opacity-50">
             <img
-              src={info.src || `https://robohash.org/${peer}.png`}
+              src={info?.src || ""}
               alt="info"
               className="w-5 h-5"
             />

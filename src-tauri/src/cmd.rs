@@ -426,3 +426,42 @@ pub fn send_dm(peer: &str, message: &str, relay_pool: tauri::State<Arc<Mutex<Rel
 
     Ok(())
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UserProfileUpdate {
+    name: Option<String>,
+    picture: Option<String>,
+    about: Option<String>,
+    nip05: Option<String>,
+}
+
+#[command]
+pub fn set_user_info(name: Option<String>, about: Option<String>, nip05: Option<String>, picture: Option<String>,  relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState>) -> Result<(), ()> {
+    let privkey = state.0.read().unwrap().privkey.clone();
+    let identity = Identity::from_str(&privkey).unwrap();
+
+    let user_profile_update = UserProfileUpdate {
+        name,
+        picture,
+        about,
+        nip05
+    };
+
+    // serialize user profile update to json
+    let content = json!(user_profile_update).to_string();
+    
+    let event = EventPrepare {
+        pub_key: identity.public_key_str.clone(),
+        created_at: get_timestamp(),
+        kind: 0,
+        tags: vec![],
+        content,
+    }
+    .to_event(&identity, 0);
+
+    let json_stringified = json!(["EVENT", event]).to_string();
+
+    relay_pool.lock().unwrap().send(json_stringified);
+    Ok(())
+}
+
