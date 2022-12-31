@@ -47,7 +47,7 @@ const MessageHead = ({ pubkey, name, picture, nip05, peer }) => {
             </div>
           </div>
         </div>
-        <div className="flex flex-row w-full justify-end">
+        {/* <div className="flex flex-row w-full justify-end">
           <div className="my-auto p-2 mx-3 cursor-pointer hover:ripple-bg-neutral-700 rounded-lg opacity-50">
             <img
               src={info?.src || ""}
@@ -55,7 +55,7 @@ const MessageHead = ({ pubkey, name, picture, nip05, peer }) => {
               className="w-5 h-5"
             />
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

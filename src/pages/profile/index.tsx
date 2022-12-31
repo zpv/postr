@@ -27,6 +27,8 @@ function EditProfile({
   setLastRefresh,
   message_list,
   setMessageList,
+  listenFunc,
+  setListenFunc,
 }) {
   const tab = "none";
 
@@ -41,7 +43,7 @@ function EditProfile({
       <div className="grid grid-cols-[180px_1fr] h-full">
         <Layout {...{ user_profile }} {...{ tab }}>
           <EditProfileLayout
-            {...{ user_profile, setProfiles, setLastRefresh, setPeer, setMessageList }}
+            {...{ user_profile, setProfiles, setLastRefresh, setPeer, setMessageList, listenFunc, setListenFunc }}
           />
         </Layout>
       </div>

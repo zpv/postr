@@ -12,6 +12,8 @@ const EditProfile = ({
   setLastRefresh,
   setPeer,
   setMessageList,
+  setListenFunc,
+  listenFunc,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [initialProfileLoaded, setInitialProfileLoaded] = useState(false);
@@ -139,6 +141,8 @@ const EditProfile = ({
             setPeer,
             setMessageList,
             formRef,
+            setListenFunc,
+            listenFunc,
           }}
         />
       ) : null}

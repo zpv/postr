@@ -8,7 +8,7 @@ const relayUrls = [
   "wss://nostr-relay.untethr.me",
 ];
 
-function App() {
+function App({ listenFunc, setListenFunc }) {
   const [greetMsg, setGreetMsg] = useState("");
   const [privkey, setPrivkey] = useState("");
 
@@ -26,7 +26,9 @@ function App() {
 
   const launchApp = async (privkey: string) => {
     await invoke("set_privkey", { privkey });
-    invoke("sub_to_msg_events")
+
+    // invoke("sub_to_msg_events");
+    setListenFunc(invoke("sub_to_msg_events"));
 
     router.push("/messages");
   };
@@ -63,8 +65,7 @@ function App() {
           className="px-4 mx-2 cursor-pointer bg-neutral-800 hover:bg-slate-700 rounded-md"
           onClick={(e) => {
             launchApp(privkey);
-          }}
-        >
+          }}>
           Launch
         </h2>
       </div>
@@ -74,8 +75,7 @@ function App() {
           className="rounded-lg px-2 bg-neutral-800 hover:bg-slate-700 cursor-pointer"
           onClick={(e) => {
             launchApp(default_privkey);
-          }}
-        >
+          }}>
           Launch with default private key
         </h2>
       </div>
@@ -89,8 +89,7 @@ function App() {
             ).toString("hex");
 
             launchApp(random);
-          }}
-        >
+          }}>
           Launch with random private key
         </h2>
       </div>

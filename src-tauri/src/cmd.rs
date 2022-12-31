@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::str::FromStr;
@@ -6,29 +5,28 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Instant;
 
-use nostr_rust::Identity;
-use nostr_rust::events::EventPrepare;
-use nostr_rust::nips::nip4::PrivateMessage;
-use nostr_rust::nips::nip4::decrypt;
-use nostr_rust::nips::nip4::encrypt;
-use nostr_rust::utils::get_timestamp;
-use rusqlite::ToSql;
-use rusqlite::named_params;
-use serde_json::json;
-use tauri::Manager;
-use tokio::sync::broadcast;
-use crate::db::SqlitePool;
 use crate::db::query_from_sub;
+use crate::db::SqlitePool;
 use crate::event::Event;
 use crate::socket::RelayPool;
 use crate::state::PostrState;
 use crate::subscription::Req;
 use crate::subscription::ReqFilter;
-use serde::{Deserialize, Serialize};
 use crate::subscription::Subscription;
+use nostr_rust::events::EventPrepare;
+use nostr_rust::nips::nip4::decrypt;
+use nostr_rust::nips::nip4::encrypt;
+use nostr_rust::nips::nip4::PrivateMessage;
+use nostr_rust::utils::get_timestamp;
+use nostr_rust::Identity;
+use rusqlite::named_params;
+use rusqlite::ToSql;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 use tauri::command;
+use tauri::Manager;
+use tokio::sync::broadcast;
 use tracing::*;
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserProfile {
@@ -39,7 +37,7 @@ pub struct UserProfile {
     nip05: Option<String>,
     is_current: bool,
     created_at: i64,
-    first_seen: i64
+    first_seen: i64,
 }
 
 #[command]
@@ -56,30 +54,34 @@ pub fn set_privkey(privkey: &str, state: tauri::State<PostrState>) -> Result<(),
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[command]
-pub fn user_profile(pubkey: &str, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>) -> Result<UserProfile, String> {
-    let filters = vec![
-            ReqFilter { 
-                ids: None,
-                kinds: Some([0].to_vec()),
-                since: None,
-                until: None,
-                authors: Some([pubkey.to_string()].to_vec()),
-                limit: Some(1),
-                tags: None,
-                force_no_match: false,
-            }
-        ];
-    
+pub fn user_profile(
+    pubkey: &str,
+    db_pool: tauri::State<SqlitePool>,
+    relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
+) -> Result<UserProfile, String> {
+    let filters = vec![ReqFilter {
+        ids: None,
+        kinds: Some([0].to_vec()),
+        since: None,
+        until: None,
+        authors: Some([pubkey.to_string()].to_vec()),
+        limit: Some(1),
+        tags: None,
+        force_no_match: false,
+    }];
+
     let req = Req::new(None, filters);
     debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
 
     // get user profile from pubkey
     if let Ok(conn) = db_pool.get() {
-        let mut statement = conn.prepare("SELECT * FROM users WHERE pubkey = ? AND is_current").unwrap();
-        let mut users = statement.query_map([pubkey], |row| {
-            Ok(
-                UserProfile {
+        let mut statement = conn
+            .prepare("SELECT * FROM users WHERE pubkey = ? AND is_current")
+            .unwrap();
+        let mut users = statement
+            .query_map([pubkey], |row| {
+                Ok(UserProfile {
                     pubkey: row.get(0)?,
                     name: row.get(1)?,
                     picture: row.get(2)?,
@@ -87,11 +89,10 @@ pub fn user_profile(pubkey: &str, db_pool: tauri::State<SqlitePool>, relay_pool:
                     nip05: row.get(4)?,
                     is_current: row.get(5)?,
                     created_at: row.get(6)?,
-                    first_seen: row.get(7)?
-                }
-            )
-        }).unwrap();
-
+                    first_seen: row.get(7)?,
+                })
+            })
+            .unwrap();
 
         if let Some(user) = users.next() {
             Ok(user.unwrap())
@@ -103,45 +104,48 @@ pub fn user_profile(pubkey: &str, db_pool: tauri::State<SqlitePool>, relay_pool:
     }
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 
 pub struct UserConvo {
     pub peer: String,
-    pub last_message: i64
+    pub last_message: i64,
 }
 
 #[command]
-pub fn user_convos(db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState>) -> Result<Vec<UserConvo>, String> {
+pub fn user_convos(
+    db_pool: tauri::State<SqlitePool>,
+    relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
+    state: tauri::State<PostrState>,
+) -> Result<Vec<UserConvo>, String> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
 
     let filters = vec![
-            ReqFilter { 
-                ids: None,
-                kinds: Some([4].to_vec()),
-                since: None,
-                until: None,
-                authors: Some([identity.public_key_str.clone()].to_vec()),
-                limit: Some(100),
-                tags: None,
-                force_no_match: false,
-            }
-            ,
-            ReqFilter { 
-                ids: None,
-                kinds: Some([4].to_vec()),
-                since: None,
-                until: None,
-                authors: None,
-                limit: Some(100),
-                tags: Some(
-                    HashMap::from([('p', HashSet::from([identity.public_key_str.clone()]))])
-                ),
-                force_no_match: false,
-            },
-        ];
-    
+        ReqFilter {
+            ids: None,
+            kinds: Some([4].to_vec()),
+            since: None,
+            until: None,
+            authors: Some([identity.public_key_str.clone()].to_vec()),
+            limit: Some(100),
+            tags: None,
+            force_no_match: false,
+        },
+        ReqFilter {
+            ids: None,
+            kinds: Some([4].to_vec()),
+            since: None,
+            until: None,
+            authors: None,
+            limit: Some(100),
+            tags: Some(HashMap::from([(
+                'p',
+                HashSet::from([identity.public_key_str.clone()]),
+            )])),
+            force_no_match: false,
+        },
+    ];
+
     let req = Req::new(Some("convos"), filters);
     debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
@@ -149,7 +153,9 @@ pub fn user_convos(db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<A
     info!("Invoked user_convos with {:?}", identity.public_key_str);
     if let Ok(conn) = db_pool.get() {
         let start = Instant::now();
-        let mut statement = conn.prepare(r##"
+        let mut statement = conn
+            .prepare(
+                r##"
         SELECT 
             CASE 
                 WHEN t.value_hex = :current_user THEN author 
@@ -163,22 +169,26 @@ pub fn user_convos(db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<A
                 AND (t.value_hex = :current_user OR author = :current_user)
         GROUP BY peer
     
-        "##).unwrap();
+        "##,
+            )
+            .unwrap();
 
         let h = hex::decode(identity.public_key_str).unwrap();
         let params = named_params! { ":current_user": Box::new(h.clone())};
 
-        let mut users = statement.query_map(params, |row| {
-            let peer_pubkey: Vec<u8> = row.get(0)?;
-            let last_message: i64 = row.get(1)?;
+        let mut users = statement
+            .query_map(params, |row| {
+                let peer_pubkey: Vec<u8> = row.get(0)?;
+                let last_message: i64 = row.get(1)?;
 
-            let peer_pubkey_str = hex::encode(peer_pubkey);
+                let peer_pubkey_str = hex::encode(peer_pubkey);
 
-            Ok(UserConvo {
-                peer: peer_pubkey_str,
-                last_message: last_message,
+                Ok(UserConvo {
+                    peer: peer_pubkey_str,
+                    last_message: last_message,
+                })
             })
-        }).unwrap();
+            .unwrap();
 
         let mut result = Vec::new();
         while let Some(event) = users.next() {
@@ -210,7 +220,14 @@ pub struct PrivateMessageWithRecipient {
 }
 
 #[command]
-pub fn user_dms(peer: &str, limit: Option<u64>, until: Option<u64>, db_pool: tauri::State<SqlitePool>, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState> ) -> Result<Vec<PrivateMessageWithRecipient>, String> {
+pub fn user_dms(
+    peer: &str,
+    limit: Option<u64>,
+    until: Option<u64>,
+    db_pool: tauri::State<SqlitePool>,
+    relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
+    state: tauri::State<PostrState>,
+) -> Result<Vec<PrivateMessageWithRecipient>, String> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
     let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
@@ -218,41 +235,42 @@ pub fn user_dms(peer: &str, limit: Option<u64>, until: Option<u64>, db_pool: tau
     let subscription = Subscription {
         id: "idk".to_string(),
         filters: vec![
-            ReqFilter { 
+            ReqFilter {
                 ids: None,
                 kinds: Some([4].to_vec()),
                 since: None,
                 until: match until {
                     Some(u) => Some(u),
-                    None => None
+                    None => None,
                 },
                 authors: Some([identity.public_key_str.clone()].to_vec()),
                 limit: match limit {
                     Some(l) => Some(l),
-                    None => Some(100)
+                    None => Some(100),
                 },
-                tags: Some(
-                    HashMap::from([('p', HashSet::from([x_pub_key.to_string()]))])
-                ),
+                tags: Some(HashMap::from([(
+                    'p',
+                    HashSet::from([x_pub_key.to_string()]),
+                )])),
                 force_no_match: false,
-            }
-            ,
-            ReqFilter { 
+            },
+            ReqFilter {
                 ids: None,
                 kinds: Some([4].to_vec()),
                 since: None,
                 until: match until {
                     Some(u) => Some(u),
-                    None => None
+                    None => None,
                 },
                 authors: Some([x_pub_key.to_string()].to_vec()),
                 limit: match limit {
                     Some(l) => Some(l),
-                    None => Some(100)
+                    None => Some(100),
                 },
-                tags: Some(
-                    HashMap::from([('p', HashSet::from([identity.public_key_str.clone()]))])
-                ),
+                tags: Some(HashMap::from([(
+                    'p',
+                    HashSet::from([identity.public_key_str.clone()]),
+                )])),
                 force_no_match: false,
             },
         ],
@@ -268,41 +286,41 @@ pub fn user_dms(peer: &str, limit: Option<u64>, until: Option<u64>, db_pool: tau
     if let Ok(conn) = db_pool.get() {
         let mut statement = conn.prepare(&q).unwrap();
 
-        let mut events = statement.query_map(rusqlite::params_from_iter(p), |row| {
-            let msg: String = row.get(0)?;
-            let event: Event = serde_json::from_str(&msg).unwrap();
-            let created_at: i64 = row.get(1)?;
-        
-            let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
-            {
-                Ok(message) => message,
-                Err(e) => {
-                    error!("decryption error: {}", e);
-                    return Err(rusqlite::Error::InvalidQuery);
-                }
-            };
+        let mut events = statement
+            .query_map(rusqlite::params_from_iter(p), |row| {
+                let msg: String = row.get(0)?;
+                let event: Event = serde_json::from_str(&msg).unwrap();
+                let created_at: i64 = row.get(1)?;
 
-            // deserialize the message as event
-            debug!("event: {:?}", decrypted_message);
-            
-            // if event.pubkey is our pubkey, then the recipient is the peer
-            let recipient = if event.pubkey == identity.public_key_str {
-                x_pub_key.to_string()
-            } else {
-                identity.public_key_str.clone()
-            };
+                let decrypted_message =
+                    match decrypt(&identity.secret_key, &x_pub_key, &event.content) {
+                        Ok(message) => message,
+                        Err(e) => {
+                            error!("decryption error: {}", e);
+                            return Err(rusqlite::Error::InvalidQuery);
+                        }
+                    };
 
-            let private_message = PrivateMessageWithRecipient {
-                author: event.pubkey,
-                content: decrypted_message,
-                recipient,
-                timestamp: created_at as u64,
-            };
+                // deserialize the message as event
+                debug!("event: {:?}", decrypted_message);
 
-            Ok(private_message)
+                // if event.pubkey is our pubkey, then the recipient is the peer
+                let recipient = if event.pubkey == identity.public_key_str {
+                    x_pub_key.to_string()
+                } else {
+                    identity.public_key_str.clone()
+                };
 
-        }).unwrap();
+                let private_message = PrivateMessageWithRecipient {
+                    author: event.pubkey,
+                    content: decrypted_message,
+                    recipient,
+                    timestamp: created_at as u64,
+                };
 
+                Ok(private_message)
+            })
+            .unwrap();
 
         let mut result = Vec::new();
         while let Some(event) = events.next() {
@@ -311,7 +329,11 @@ pub fn user_dms(peer: &str, limit: Option<u64>, until: Option<u64>, db_pool: tau
 
         debug!("result: {:?}", result);
         result.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-        result = result.into_iter().take(limit.unwrap_or(100) as usize).rev().collect::<Vec<PrivateMessageWithRecipient>>();
+        result = result
+            .into_iter()
+            .take(limit.unwrap_or(100) as usize)
+            .rev()
+            .collect::<Vec<PrivateMessageWithRecipient>>();
 
         Ok(result)
     } else {
@@ -319,45 +341,53 @@ pub fn user_dms(peer: &str, limit: Option<u64>, until: Option<u64>, db_pool: tau
     }
 }
 
-
 #[command]
-pub async fn sub_to_msg_events(bcast_tx: tauri::State<'_, broadcast::Sender<Event>>, state: tauri::State<'_, PostrState>, app_handle: tauri::AppHandle) -> Result<(), ()> {
+pub async fn sub_to_msg_events(
+    bcast_tx: tauri::State<'_, broadcast::Sender<Event>>,
+    state: tauri::State<'_, PostrState>,
+    app_handle: tauri::AppHandle,
+) -> Result<(), ()> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
     let mut bcast_rx = bcast_tx.subscribe();
 
-    let sub_filter = 
-        Subscription {
-            id: "dms".to_string(),
-            filters:     vec![
-                ReqFilter { 
-                    ids: None,
-                    kinds: Some([4].to_vec()),
-                    since: None,
-                    until: None,
-                    authors: Some([identity.public_key_str.clone()].to_vec()),
-                    limit: Some(100),
-                    tags: None,
-                    force_no_match: false,
-                }
-                ,
-                ReqFilter { 
-                    ids: None,
-                    kinds: Some([4].to_vec()),
-                    since: None,
-                    until: None,
-                    authors: None,
-                    limit: Some(100),
-                    tags: Some(
-                        HashMap::from([('p', HashSet::from([identity.public_key_str.clone()]))])
-                    ),
-                    force_no_match: false,
-                },
-            ]
-        };
+    let sub_filter = Subscription {
+        id: "dms".to_string(),
+        filters: vec![
+            ReqFilter {
+                ids: None,
+                kinds: Some([4].to_vec()),
+                since: None,
+                until: None,
+                authors: Some([identity.public_key_str.clone()].to_vec()),
+                limit: Some(100),
+                tags: None,
+                force_no_match: false,
+            },
+            ReqFilter {
+                ids: None,
+                kinds: Some([4].to_vec()),
+                since: None,
+                until: None,
+                authors: None,
+                limit: Some(100),
+                tags: Some(HashMap::from([(
+                    'p',
+                    HashSet::from([identity.public_key_str.clone()]),
+                )])),
+                force_no_match: false,
+            },
+        ],
+    };
 
     while let Ok(event) = &bcast_rx.recv().await {
         debug!("event: {:?}", event);
+
+        // if event string is "stop subscription", then stop the subscription
+        if event.content == "stop subscription" {
+            debug!("stopping subscription");
+            break;
+        }
 
         if sub_filter.interested_in_event(event) {
             // peer is the other user in the convo. if author is us, then peer is the tag value
@@ -402,9 +432,26 @@ pub async fn sub_to_msg_events(bcast_tx: tauri::State<'_, broadcast::Sender<Even
     Ok(())
 }
 
+#[command]
+pub async fn unsub_from_msg_events(
+    bcast_tx: tauri::State<'_, broadcast::Sender<Event>>,
+) -> Result<(), ()> {
+    bcast_tx
+        .send(Event {
+            content: "stop subscription".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    Ok(())
+}
 
 #[command]
-pub fn send_dm(peer: &str, message: &str, relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState>) -> Result<(), ()> {
+pub fn send_dm(
+    peer: &str,
+    message: &str,
+    relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
+    state: tauri::State<PostrState>,
+) -> Result<(), ()> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
 
@@ -436,7 +483,14 @@ pub struct UserProfileUpdate {
 }
 
 #[command]
-pub fn set_user_info(name: Option<String>, about: Option<String>, nip05: Option<String>, picture: Option<String>,  relay_pool: tauri::State<Arc<Mutex<RelayPool>>>, state: tauri::State<PostrState>) -> Result<(), ()> {
+pub fn set_user_info(
+    name: Option<String>,
+    about: Option<String>,
+    nip05: Option<String>,
+    picture: Option<String>,
+    relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
+    state: tauri::State<PostrState>,
+) -> Result<(), ()> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
 
@@ -444,12 +498,12 @@ pub fn set_user_info(name: Option<String>, about: Option<String>, nip05: Option<
         name,
         picture,
         about,
-        nip05
+        nip05,
     };
 
     // serialize user profile update to json
     let content = json!(user_profile_update).to_string();
-    
+
     let event = EventPrepare {
         pub_key: identity.public_key_str.clone(),
         created_at: get_timestamp(),
@@ -464,4 +518,3 @@ pub fn set_user_info(name: Option<String>, about: Option<String>, nip05: Option<
     relay_pool.lock().unwrap().send(json_stringified);
     Ok(())
 }
-

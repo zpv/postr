@@ -5,13 +5,11 @@ use crate::utils::random_hash;
 use serde::de::Unexpected;
 use serde::ser::SerializeMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::Value;
 use serde_json::json;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
-
-
 
 /// Req struct is used to request events and subscribe to new updates.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -89,9 +87,10 @@ pub struct ReqFilter {
 impl Serialize for ReqFilter {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         // tags are a special case, since they are a map of chars to a set of string
-        // in the serialized JSON, each char should be a key called `\#{char}` and the value should be the set of strings 
+        // in the serialized JSON, each char should be a key called `\#{char}` and the value should be the set of strings
 
-        let mut map = serializer.serialize_map(Some(7 + self.tags.as_ref().map(|t| t.len()).unwrap_or(0)))?;
+        let mut map =
+            serializer.serialize_map(Some(7 + self.tags.as_ref().map(|t| t.len()).unwrap_or(0)))?;
         if let Some(ids) = &self.ids {
             map.serialize_entry("ids", ids)?;
         }
@@ -115,11 +114,10 @@ impl Serialize for ReqFilter {
                 map.serialize_entry(&format!("#{}", k), v)?;
             }
         }
-        map.serialize_entry("force_no_match", &self.force_no_match)?;
+        // map.serialize_entry("force_no_match", &self.force_no_match)?;
         map.end()
     }
 }
-
 
 impl<'de> Deserialize<'de> for ReqFilter {
     fn deserialize<D>(deserializer: D) -> Result<ReqFilter, D::Error>
@@ -407,7 +405,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -427,7 +425,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -447,7 +445,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(!s.interested_in_event(&e));
         Ok(())
@@ -468,7 +466,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -493,7 +491,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s_in.interested_in_event(&e));
         assert!(!s_before.interested_in_event(&e));
@@ -516,7 +514,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(!s.interested_in_event(&e));
         Ok(())
@@ -536,7 +534,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -556,7 +554,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -576,7 +574,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -596,7 +594,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(s.interested_in_event(&e));
         Ok(())
@@ -616,7 +614,7 @@ mod tests {
             content: "".to_owned(),
             sig: "".to_owned(),
             tagidx: None,
-            seen_by: Vec::new()
+            seen_by: Vec::new(),
         };
         assert!(!s.interested_in_event(&e));
         Ok(())

@@ -9,6 +9,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   const [peer, setPeer] = useState("");
   const [profiles, setProfiles] = useState({});
   const [message_list, setMessageList] = useState([]);
+  const [listenFunc, setListenFunc] = useState(() => Promise.resolve());
 
   // only invoke getMessages every 30 seconds
   const [lastRefresh, setLastRefresh] = useState(Date.now() - 999_999);
@@ -25,6 +26,8 @@ export default function MyApp({ Component, pageProps }: AppProps) {
         setLastRefresh,
         message_list,
         setMessageList,
+        listenFunc,
+        setListenFunc,
       }}
     />
   );

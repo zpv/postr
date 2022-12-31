@@ -8,6 +8,8 @@ const EditProfileModal = ({
   setPeer,
   setMessageList,
   formRef,
+  listenFunc,
+  setListenFunc,
 }) => {
   const router = useRouter();
 
@@ -15,24 +17,20 @@ const EditProfileModal = ({
     e.preventDefault();
     const privkey = e.target[0].value;
     invoke("set_privkey", { privkey }).then((res) => {
-      //   invoke("get_pubkey").then((pubkey: string) => {
-      //     invoke("user_profile", {
-      //       pubkey,
-      //     }).then((res) => {
-      //       setProfiles((prev) => {
-      //         prev[pubkey] = res;
-      //         return prev;
-      //       });
-      //       router.push("/profile");
-      //       setShowModal(false);
-      //     });
-      //   });
-      setPeer("");
-      setMessageList([]);
-      setLastRefresh(new Date(Date.now() - 999_999));
-      formRef.current.reset();
-      router.push("/profile");
-      setShowModal(false);
+      invoke("unsub_from_msg_events").then(() => {
+        console.log("unsubscribed from old private key");
+        listenFunc.then(() => {
+          setListenFunc(invoke("sub_to_msg_events"));
+          console.log("listening on new private key");
+          
+          setPeer("");
+          setMessageList([]);
+          setLastRefresh(new Date(Date.now() - 999_999));
+          formRef.current.reset();
+          router.push("/profile");
+          setShowModal(false);
+        });
+      });
     });
   };
 

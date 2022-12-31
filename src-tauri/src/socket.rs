@@ -2,12 +2,12 @@ extern crate tokio;
 extern crate websocket;
 
 use crate::db;
-use futures_util::{SinkExt, StreamExt};
-use tokio::join;
-use tokio_tungstenite::tungstenite::Message;
 use crate::error::{Error, Result};
 use crate::event::Event;
 use crate::event::EventResp;
+use futures_util::{SinkExt, StreamExt};
+use tokio::join;
+use tokio_tungstenite::tungstenite::Message;
 
 use std::collections::{hash_set, HashSet};
 use std::env;
@@ -63,9 +63,7 @@ pub struct RelayPool {
 impl RelayPool {
     // takes a vector of broadcast::Sender<String> and returns a RelayPool
     pub fn new(broadcast_txs: Vec<broadcast::Sender<String>>) -> Self {
-        Self {
-            broadcast_txs
-        }
+        Self { broadcast_txs }
     }
 
     pub fn add(&mut self, tx: broadcast::Sender<String>) {
@@ -81,11 +79,7 @@ impl RelayPool {
 
 impl RelaySocket {
     pub fn new(relay: String, event_tx: tokio::sync::mpsc::Sender<Event>) -> Self {
-
-        Self {
-            relay,
-            event_tx,
-        }
+        Self { relay, event_tx }
     }
 
     pub fn connect(&mut self) -> broadcast::Sender<String> {
@@ -145,62 +139,71 @@ impl RelaySocket {
                     if msg.is_text() {
                         let msg = msg.into_text().unwrap();
                         let parsed_msg = convert_to_msg(msg, None);
-        
+
                         match parsed_msg {
-                            Ok(m) => {
-                                match m {
-                                    NostrMessage::EventMsg(ec) => {
-                                        let parsed: Result<Event> = Result::<Event>::from(ec);
-        
-                                        match parsed {
-                                            Ok(mut e) => {
-                                                let id_prefix: String = e.id.chars().take(8).collect();
-                                                e.seen_by = vec![relay.clone()];
-                                                debug!(
+                            Ok(m) => match m {
+                                NostrMessage::EventMsg(ec) => {
+                                    let parsed: Result<Event> = Result::<Event>::from(ec);
+
+                                    match parsed {
+                                        Ok(mut e) => {
+                                            let id_prefix: String = e.id.chars().take(8).collect();
+                                            e.seen_by = vec![relay.clone()];
+                                            debug!(
                                                     "successfully parsed/validated event: {:?} relay: {:?}",
                                                     id_prefix, &relay
                                                 );
 
-                                                if let Err(_) = &event_tx.send(e.clone()).await {
-                                                        error!("receiver dropped");
-                                                        break;
-                                                }
+                                            if let Err(_) = &event_tx.send(e.clone()).await {
+                                                error!("receiver dropped");
+                                                break;
                                             }
-                                            Err(e) => {
-                                                error!("client sent an invalid event");
-                                            }
+                                        }
+                                        Err(e) => {
+                                            error!("client sent an invalid event");
                                         }
                                     }
-                                    NostrMessage::EOSEMsg(eose) => {
-                                        info!("received EOSE message from relay {:?}: {:?}", relay, eose);
-                                        if eose.cmd != "EOSE" {
-                                            error!("received EOSE message with invalid command: {:?}", eose.cmd);
-                                            continue;
-                                        }
-
-                                        if eose.id == "cid" {
-                                            continue;
-                                        }
-
-                                        info!("sending CLOSE {} message to relay: {:?}", eose.id, relay);
-
-                                        tx_clone_2.send(json!(["CLOSE", eose.id]).to_string()).unwrap();
-                                    },
                                 }
-                            }
+                                NostrMessage::EOSEMsg(eose) => {
+                                    info!(
+                                        "received EOSE message from relay {:?}: {:?}",
+                                        relay, eose
+                                    );
+                                    if eose.cmd != "EOSE" {
+                                        error!(
+                                            "received EOSE message with invalid command: {:?}",
+                                            eose.cmd
+                                        );
+                                        continue;
+                                    }
+
+                                    if eose.id == "cid" {
+                                        continue;
+                                    }
+
+                                    info!(
+                                        "sending CLOSE {} message to relay: {:?}",
+                                        eose.id, relay
+                                    );
+
+                                    tx_clone_2
+                                        .send(json!(["CLOSE", eose.id]).to_string())
+                                        .unwrap();
+                                }
+                            },
                             Err(e) => {
                                 error!("Error: {:?}", e);
                             }
                         }
                     }
                 }
-           
+
                 send_handler.abort();
-            }    
+            }
         });
 
-        return tx
-      }
+        return tx;
+    }
 }
 
 /// Convert Message to NostrMessage

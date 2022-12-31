@@ -66,6 +66,23 @@ pub struct Event {
     pub(crate) seen_by: Vec<String>,
 }
 
+impl Default for Event {
+    fn default() -> Self {
+        Event {
+            id: "".to_string(),
+            pubkey: "".to_string(),
+            delegated_by: None,
+            created_at: 0,
+            kind: 0,
+            tags: Vec::new(),
+            content: "".to_string(),
+            sig: "".to_string(),
+            tagidx: None,
+            seen_by: Vec::new(),
+        }
+    }
+}
+
 /// Simple tag type for array of array of strings.
 type Tag = Vec<Vec<String>>;
 

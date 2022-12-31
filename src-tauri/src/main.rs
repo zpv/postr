@@ -5,8 +5,8 @@ use postr::db::{self, SqlitePool};
 use postr::event::Event;
 use postr::socket::RelayPool;
 use postr::state::{PostrState, InnerState};
-use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__get_pubkey, __cmd__user_convos, __cmd__sub_to_msg_events, __cmd__send_dm, __cmd__set_privkey, __cmd__set_user_info};
-use postr::cmd::{user_profile, user_dms, get_pubkey, user_convos, sub_to_msg_events, send_dm, set_privkey, set_user_info};
+use postr::{socket, __cmd__user_profile, __cmd__user_dms, __cmd__get_pubkey, __cmd__user_convos, __cmd__sub_to_msg_events, __cmd__unsub_from_msg_events, __cmd__send_dm, __cmd__set_privkey, __cmd__set_user_info};
+use postr::cmd::{user_profile, user_dms, get_pubkey, user_convos, sub_to_msg_events, unsub_from_msg_events, send_dm, set_privkey, set_user_info};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use serde::{Deserialize, Serialize};
@@ -166,6 +166,7 @@ fn main() {
                 user_convos,
                 get_pubkey,
                 sub_to_msg_events,
+                unsub_from_msg_events,
                 send_dm,
                 set_user_info
             ])
