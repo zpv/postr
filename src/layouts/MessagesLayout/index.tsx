@@ -1,26 +1,61 @@
-import { listen } from "@tauri-apps/api/event";
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/tauri";
 
 import { useEffect, useState } from "react";
 import Message from "../../components/Message";
 
 import MessagesNav from "../../components/MessagesNav";
+import {
+  ConversationsListItem,
+  SingleMessage,
+  Profiles,
+  SetStringState,
+  SetProfilesState,
+  SetNumberState,
+  SetConversationsListState,
+  Profile,
+  DmEvent,
+} from "../../lib/types";
 
-const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefresh, setLastRefresh, message_list, setMessageList }) => {
-  const [message, setMessage] = useState("");
-  const [conversation, setConversation] = useState([]);
-  const [onSubmit, setOnSubmit] = useState(false);
-  const [loading, setLoading] = useState(true);
+interface MessagesLayoutProps {
+  user: string;
+  peer: string;
+  setPeer: SetStringState;
+  profiles: Profiles;
+  setProfiles: SetProfilesState;
+  lastRefresh: number;
+  setLastRefresh: SetNumberState;
+  message_list: ConversationsListItem[];
+  setMessageList: SetConversationsListState;
+}
 
-  const getMessages = async () => {
+const MessagesLayout: React.FC<MessagesLayoutProps> = ({
+  user,
+  peer,
+  setPeer,
+  profiles,
+  setProfiles,
+  lastRefresh,
+  setLastRefresh,
+  message_list,
+  setMessageList,
+}) => {
+  const [message, setMessage] = useState<string>("");
+  const [conversation, setConversation] = useState<SingleMessage[]>([]);
+  const [onSubmit, setOnSubmit] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const getMessages: () => Promise<ConversationsListItem[]> = async () => {
     if (Date.now() - lastRefresh < 30_000) {
       return message_list;
     }
-    return await invoke("user_convos");
+    return await invoke<ConversationsListItem[]>("user_convos");
   };
 
-  const getProfile = async (pubkey) => {
-    return await invoke("user_profile", {
+  const getProfile: (pubkey: string) => Promise<Profile> = async (
+    pubkey: string
+  ) => {
+    return await invoke<Profile>("user_profile", {
       pubkey: pubkey,
     })
       .then((r: any) => {
@@ -35,32 +70,32 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
       });
   };
 
-  const getProfiles = async (messages) => {
+  const getProfiles: (
+    messages: ConversationsListItem[]
+  ) => Promise<Profiles> = async (messages: ConversationsListItem[]) => {
     if (Date.now() - lastRefresh < 30_000) {
-      return message_list;
-    } else {
-      setLastRefresh(Date.now());
+      return profiles;
     }
-    const res = profiles;
+    setLastRefresh(Date.now());
+    const res: Profiles = profiles;
     for (const message of messages) {
       res[message.peer] = await getProfile(message.peer);
     }
     return res;
   };
 
-  const refreshMessages = () =>
+  const refreshMessages: () => Promise<void> = () =>
     getMessages()
-      .then((messages: any) => {
-        return getProfiles(messages)
-          .then((profiles) => {
-            setMessageList(messages);
-            setProfiles((prev) => {
-              return { ...prev, ...profiles };
-            });
-          })
-          .catch((e) => {
-            console.log(e);
+      .then(async (messages: ConversationsListItem[]) => {
+        try {
+          const profiles: Profiles = await getProfiles(messages);
+          setMessageList(messages);
+          setProfiles((prev) => {
+            return { ...prev, ...profiles };
           });
+        } catch (e) {
+          console.log(e);
+        }
       })
       .catch((e) => {
         setMessageList([]);
@@ -70,7 +105,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
       });
 
   useEffect(() => {
-    const unlisten = listen("dm", (event: any) => {
+    const unlisten: Promise<UnlistenFn> = listen("dm", (event: DmEvent) => {
       // if dm is for this peer, add it to the conversation
       if (
         peer === event.payload.author ||
@@ -79,12 +114,12 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
         setConversation((prev) => [...prev, event.payload]);
       }
 
-      console.log(event)
+      console.log(event);
       // everything below here is to update message list
 
       // setup profile if it doesn't exist
-      const updatePeerProfile = (peer_pubkey) => {
-        const peer_profile = profiles[peer_pubkey];
+      const updatePeerProfile = (peer_pubkey: string) => {
+        const peer_profile: Profile = profiles[peer_pubkey];
         if (!peer_profile) {
           getProfile(peer_pubkey).then((profile) => {
             setProfiles((prev_profiles) => {
@@ -96,10 +131,12 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
       };
 
       // update message list to move most recent message to top
-      setMessageList((prev) => {
+      setMessageList((prev: ConversationsListItem[]) => {
         // handle case where author === recipient (i.e. sending to self)
         if (event.payload.author === event.payload.recipient) {
-          const message = prev.find((m) => m.peer === event.payload.author);
+          const message: ConversationsListItem = prev.find(
+            (m) => m.peer === event.payload.author
+          );
           if (message) {
             message.last_message = Math.max(
               message.last_message,
@@ -107,7 +144,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
             );
             return [...prev].sort((a, b) => b.last_message - a.last_message);
           } else {
-            const pubkey = event.payload.author;
+            const pubkey: string = event.payload.author;
 
             updatePeerProfile(pubkey);
 
@@ -122,7 +159,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
         }
 
         // handle rest of cases
-        const message = prev.find(
+        const message: ConversationsListItem = prev.find(
           (m) =>
             (m.peer === event.payload.author ||
               m.peer === event.payload.recipient) &&
@@ -135,7 +172,7 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
           );
           return [...prev].sort((a, b) => b.last_message - a.last_message);
         } else {
-          const pubkey =
+          const pubkey: string =
             user === event.payload.author
               ? event.payload.recipient
               : event.payload.author;
@@ -165,14 +202,14 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
       setLoading(true);
       (async () => {
         if (!profiles[peer] || profiles[peer].failed) {
-          const profile = await getProfile(peer);
+          const profile: Profile = await getProfile(peer);
           console.log("using default profile for ", profile);
           setProfiles((prev) => {
             return { ...prev, [peer]: profile };
           });
         }
-        const switchConversation = async () => {
-          return await invoke("user_dms", { peer, limit: 40 });
+        const switchConversation: () => Promise<SingleMessage[]> = async () => {
+          return await invoke<SingleMessage[]>("user_dms", { peer, limit: 40 });
         };
         switchConversation()
           .then((r: any) => {
@@ -190,8 +227,8 @@ const MessagesLayout = ({ user, peer, setPeer, profiles, setProfiles, lastRefres
 
   useEffect(() => {
     if (onSubmit && message !== "") {
-      const sendMessage = async () => {
-        return await invoke("send_dm", { peer, message });
+      const sendMessage: () => Promise<void> = async () => {
+        return await invoke<void>("send_dm", { peer, message });
       };
       sendMessage()
         .then((r: any) => {

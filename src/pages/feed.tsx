@@ -1,11 +1,12 @@
 import Layout from "../layouts/Layout";
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import { Profile } from "../lib/types";
 
 Feed.getInitialProps = async (ctx) => {
-  const user_pubkey = await invoke("get_pubkey");
+  const user_pubkey: string = await invoke("get_pubkey");
   console.log(user_pubkey);
-  const user_profile: any = await invoke("user_profile", {
+  const user_profile: Profile = await invoke<Profile>("user_profile", {
     pubkey: user_pubkey,
   }).catch((e) => {
     return {
@@ -18,7 +19,7 @@ Feed.getInitialProps = async (ctx) => {
 };
 
 function Feed({ user_profile }) {
-  const tab = "Feed";
+  const tab: string = "Feed";
   const pageBody = (
     <>
       <p>feed2</p>

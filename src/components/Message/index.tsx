@@ -1,11 +1,24 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useState } from "react";
+import { SingleMessage, Profile, SetStringState, SetBooleanState, SetMessagesState } from "../../lib/types";
 import LoadingWheel from "../LoadingWheel";
 import MessageBody from "../MessageBody";
 import MessageCompose from "../MessageCompose";
 import MessageHead from "../MessageHead";
 
-const Message = ({
+interface MessageProps {
+  user: string;
+  peer_profile: Profile,
+  peer: string;
+  conversation: SingleMessage[];
+  loading: boolean;
+  message: string;
+  setMessage: SetStringState;
+  setOnSubmit: SetBooleanState;
+  setConversation: SetMessagesState;
+}
+
+const Message: React.FC<MessageProps> = ({
   user,
   peer_profile,
   peer,

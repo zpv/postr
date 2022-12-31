@@ -1,10 +1,24 @@
 import { useState } from "react";
+import { ConversationsListItem, SingleMessage, Profiles, SetStringState } from "../../lib/types";
 import MessagesNavListItem from "../MessagesNavListItem";
 
-const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
-  const [searchFilter, setSearchFilter] = useState("");
+interface MessagesNavListProps {
+  message_list: ConversationsListItem[];
+  peer: string;
+  profiles: Profiles;
+  setPeer: SetStringState;
+}
 
-  const handleClick = (pubkey) => {
+const MessagesNavList: React.FC<MessagesNavListProps> = ({
+  message_list,
+  peer,
+  profiles,
+  setPeer,
+}) => {
+  const [searchFilter, setSearchFilter] = useState<string>("");
+  let itemId: number = 1;
+
+  const handleClick = (pubkey: string) => {
     setPeer(pubkey);
   };
 
@@ -27,7 +41,7 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
     }
   };
 
-  const filteredOut = (msg) => {
+  const filteredOut = (msg: ConversationsListItem) => {
     const { name, pubkey, nip05 } = profiles[msg.peer];
 
     return (
@@ -45,8 +59,7 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
       <div className="p-3">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-row items-center justify-between"
-        >
+          className="flex flex-row items-center justify-between">
           <input
             type="text"
             placeholder="Search... (nip05, pubkey, name)"
@@ -58,7 +71,8 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
       </div>
 
       <div className="overflow-y-auto h-full">
-        {message_list.map((msg) => {
+        {message_list.map((msg: ConversationsListItem) => {
+          console.log(msg);
           if (searchFilter !== "") {
             if (filteredOut(msg)) {
               return <></>;
@@ -73,7 +87,7 @@ const MessagesNavList = ({ message_list, peer, profiles, setPeer }) => {
                   ? "bg-neutral-900 border-r-2"
                   : "hover:bg-neutral-900")
               }
-            >
+              key={itemId++}>
               <MessagesNavListItem {...profiles[msg.peer]} {...msg} />
             </div>
           );

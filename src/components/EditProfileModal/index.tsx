@@ -1,9 +1,19 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
+import { SetBooleanState, SetConversationsListState, SetListenFuncState, SetNumberState, SetProfilesState, SetStringState } from "../../lib/types";
 
-const EditProfileModal = ({
+interface EditProfileModalProps {
+  setShowModal: SetBooleanState;
+  setLastRefresh: SetNumberState;
+  setPeer: SetStringState;
+  setMessageList: SetConversationsListState;
+  setListenFunc: SetListenFuncState;
+  listenFunc: Promise<void>;
+  formRef: any;
+}
+
+const EditProfileModal: React.FC<EditProfileModalProps> = ({
   setShowModal,
-  setProfiles,
   setLastRefresh,
   setPeer,
   setMessageList,
@@ -25,7 +35,7 @@ const EditProfileModal = ({
           
           setPeer("");
           setMessageList([]);
-          setLastRefresh(new Date(Date.now() - 999_999));
+          setLastRefresh(Date.now() - 999_999);
           formRef.current.reset();
           router.push("/profile");
           setShowModal(false);

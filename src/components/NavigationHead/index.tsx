@@ -1,9 +1,21 @@
 import Link from "next/link";
 import { useState } from "react";
 
-const NavigationHead = ({ picture, nip05, pubkey, name }) => {
-  const [isHovering, setIsHovering] = useState(false);
-  const display_name = name || (pubkey && pubkey.slice(0, 6)) || "";
+interface NavigationHeadProps {
+  picture?: string;
+  nip05?: string;
+  pubkey: string;
+  name?: string;
+}
+
+const NavigationHead: React.FC<NavigationHeadProps> = ({
+  picture,
+  nip05,
+  pubkey,
+  name,
+}) => {
+  const [isHovering, setIsHovering] = useState<boolean>(false);
+  const display_name: string = name || (pubkey && pubkey.slice(0, 6)) || "";
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(pubkey);
@@ -35,7 +47,9 @@ const NavigationHead = ({ picture, nip05, pubkey, name }) => {
             {!isHovering && display_name}
           </h1>
           <Link href="/profile">
-            <h2 className="mx-2 text-neutral-600 cursor-pointer hover:underline">Edit profile</h2>
+            <h2 className="mx-2 text-neutral-600 cursor-pointer hover:underline">
+              Edit profile
+            </h2>
           </Link>
         </div>
       </div>

@@ -1,12 +1,23 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import EditProfileModal from "../EditProfileModal";
+import { ConversationsListItem, Profile, Profiles, SetConversationsListState, SetListenFuncState, SetNumberState, SetProfilesState } from "../../lib/types";
 
 const style =
   " text-neutral-500 focus:text-white bg-neutral-700 bg-opacity-20 rounded-sm px-2 py-1 w-full placeholder-neutral-500 focus:placeholder-opacity-0";
 
-const EditProfile = ({
+interface EditProfileProps {
+  user_profile: Profile;
+  setProfiles: SetProfilesState;
+  setLastRefresh: SetNumberState;
+  setPeer: (peer: string) => void;
+  setMessageList: SetConversationsListState;
+  setListenFunc: SetListenFuncState;
+  listenFunc: Promise<void>;
+}
+
+const EditProfile: React.FC<EditProfileProps> = ({
   user_profile,
   setProfiles,
   setLastRefresh,
@@ -15,9 +26,9 @@ const EditProfile = ({
   setListenFunc,
   listenFunc,
 }) => {
-  const [showModal, setShowModal] = useState(false);
-  const [initialProfileLoaded, setInitialProfileLoaded] = useState(false);
-  const [attempts, setAttempts] = useState(1);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [isProfileLoaded, setIsProfileLoaded] = useState<boolean>(false);
+  const [attempts, setAttempts] = useState<number>(1);
   const router = useRouter();
   const formRef = useRef(null);
   const msgRef = useRef(null);
@@ -37,7 +48,7 @@ const EditProfile = ({
 
       msgRef.current.innerText =
         "Unable to load profile. (still loading or relay(s) down)";
-      setInitialProfileLoaded(false);
+      setIsProfileLoaded(false);
     } else {
       formRef.current[0].disabled = false;
       formRef.current[1].disabled = false;
@@ -49,7 +60,7 @@ const EditProfile = ({
       formRef.current[2].classList.remove("cursor-not-allowed");
       formRef.current[3].classList.remove("cursor-not-allowed");
 
-      setInitialProfileLoaded(true);
+      setIsProfileLoaded(true);
     }
   }, [user_profile]);
 
@@ -64,18 +75,18 @@ const EditProfile = ({
         pubkey: user_profile?.pubkey,
       })
         .then((res) => {
-          setProfiles((prev) => {
+          setProfiles((prev: Profiles) => {
             prev[user_profile?.pubkey] = res;
             return prev;
           });
           router.push("/profile");
         })
         .catch((err) => {
-          const default_profile = {
+          const default_profile: Profile = {
             pubkey: user_profile?.pubkey,
             failed: true,
           };
-          setProfiles((prev) => {
+          setProfiles((prev: Profiles) => {
             prev[user_profile?.pubkey] = default_profile;
             return prev;
           });
@@ -91,7 +102,7 @@ const EditProfile = ({
       pubkey: user_profile?.pubkey,
     })
       .then((res) => {
-        setProfiles((prev) => {
+        setProfiles((prev: Profiles) => {
           prev[user_profile?.pubkey] = res;
           return prev;
         });
@@ -116,7 +127,7 @@ const EditProfile = ({
       picture,
     };
     invoke("set_user_info", { ...data }).then((res) => {
-      setProfiles((prev) => {
+      setProfiles((prev: Profiles) => {
         prev[user_profile?.pubkey] = { ...user_profile, ...data };
         console.log(prev[user_profile?.pubkey]);
         return prev;
@@ -136,7 +147,6 @@ const EditProfile = ({
         <EditProfileModal
           {...{
             setShowModal,
-            setProfiles,
             setLastRefresh,
             setPeer,
             setMessageList,
@@ -194,14 +204,14 @@ const EditProfile = ({
             />
           </div>
           <div className="flex items-center col-span-2  ">
-            {initialProfileLoaded && (
+            {isProfileLoaded && (
               <button
                 type="submit"
                 className="bg-indigo-800 rounded-sm px-3 py-1 font-medium text-white my-2 hover:ripple-bg-indigo-800 w-min">
                 Save
               </button>
             )}
-            {!initialProfileLoaded && (
+            {!isProfileLoaded && (
               <button
                 type="button"
                 className="bg-neutral-900 border border-red-500 rounded-sm px-3 py-1 font-medium text-white my-2 hover:bg-red-500 transition duration-150 w-min"

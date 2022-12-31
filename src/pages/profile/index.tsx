@@ -1,10 +1,11 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import EditProfileLayout from "../../layouts/EditProfileLayout";
 import Layout from "../../layouts/Layout";
+import { Profile } from "../../lib/types";
 
 EditProfile.getInitialProps = async (ctx) => {
-  const user_pubkey: string = await invoke("get_pubkey");
-  const user_profile: any = await invoke("user_profile", {
+  const user_pubkey: string = await invoke<string>("get_pubkey");
+  const user_profile: Profile = await invoke<Profile>("user_profile", {
     pubkey: user_pubkey,
   }).catch((e) => {
     return {
@@ -30,9 +31,12 @@ function EditProfile({
   listenFunc,
   setListenFunc,
 }) {
-  const tab = "none";
+  const tab: string = "none";
 
-  if (!profiles[user_profile?.pubkey] || profiles[user_profile?.pubkey]?.failed) {
+  if (
+    !profiles[user_profile?.pubkey] ||
+    profiles[user_profile?.pubkey]?.failed
+  ) {
     profiles[user_profile?.pubkey] = user_profile;
   } else {
     user_profile = profiles[user_profile?.pubkey];
@@ -43,7 +47,15 @@ function EditProfile({
       <div className="grid grid-cols-[180px_1fr] h-full">
         <Layout {...{ user_profile }} {...{ tab }}>
           <EditProfileLayout
-            {...{ user_profile, setProfiles, setLastRefresh, setPeer, setMessageList, listenFunc, setListenFunc }}
+            {...{
+              user_profile,
+              setProfiles,
+              setLastRefresh,
+              setPeer,
+              setMessageList,
+              listenFunc,
+              setListenFunc,
+            }}
           />
         </Layout>
       </div>

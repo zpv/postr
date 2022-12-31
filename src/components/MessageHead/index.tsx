@@ -2,9 +2,21 @@ import { useState } from "react";
 import info from "../../assets/info.png";
 import verifIcon from "../../assets/verif.png";
 
-const MessageHead = ({ pubkey, name, picture, nip05, peer }) => {
-  const display_name = name || (peer && peer.slice(0, 6)) || "";
-  const hover_text = peer.slice(0, 10) + "..." + peer.slice(-10);
+interface MessageHeadProps {
+  name?: string;
+  picture?: string;
+  nip05?: string;
+  peer: string;
+}
+
+const MessageHead: React.FC<MessageHeadProps> = ({
+  name,
+  picture,
+  nip05,
+  peer,
+}) => {
+  const display_name: string = name || (peer && peer.slice(0, 6)) || "";
+  const hover_text: string = peer.slice(0, 10) + "..." + peer.slice(-10);
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(peer);

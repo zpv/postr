@@ -2,25 +2,15 @@ import { sha256 } from "@noble/hashes/sha256";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { Profile } from "../lib/types";
 
-const relayUrls = [
+const relayUrls: string[] = [
   "wss://nostr-pub.wellorder.net",
   "wss://nostr-relay.untethr.me",
 ];
 
 function App({ listenFunc, setListenFunc }) {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [privkey, setPrivkey] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(
-      await invoke("user_profile", {
-        pubkey:
-          "6a0e6b709fb5239a3df637695764f153e56edccd48fa1c64916b8481d0ca3ab3",
-      })
-    );
-  }
+  const [privkey, setPrivkey] = useState<string>("");
 
   const router = useRouter();
 
@@ -33,17 +23,7 @@ function App({ listenFunc, setListenFunc }) {
     router.push("/messages");
   };
 
-  // const user = {
-  //   public_key: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee",
-  //   icon: "https://avatars.githubusercontent.com/u/12267041?v=4",
-  //   display_name: "",
-  // }
-
-  // const initialState = {
-  //   cli: "da43ff28ba49aad308de30426c16c106beb25a4b381b36e2e72c64f3e6b8a3ee"
-  // }
-
-  const default_privkey =
+  const default_privkey: string =
     "bb13681e0cd2f86d6a8d124fe051abf8a8a250a6d7357cb6b6e67a8640203ece";
 
   return (

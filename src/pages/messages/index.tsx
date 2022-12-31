@@ -2,15 +2,16 @@ import { useState } from "react";
 import MessagesLayout from "../../layouts/MessagesLayout";
 import { invoke } from "@tauri-apps/api/tauri";
 import Layout from "../../layouts/Layout";
+import { Profile } from "../../lib/types";
 
 Messages.getInitialProps = async (ctx) => {
-  const user_pubkey: string = await invoke("get_pubkey");
-  const user_profile: any = await invoke("user_profile", {
+  const user_pubkey: string = await invoke<string>("get_pubkey");
+  const user_profile: Profile = await invoke<Profile>("user_profile", {
     pubkey: user_pubkey,
   }).catch((e) => {
     return {
       pubkey: user_pubkey,
-      failed: true
+      failed: true,
     };
   });
 
@@ -29,10 +30,12 @@ function Messages({
   message_list,
   setMessageList,
 }) {
-  // rudimentary state lol
-  const tab = "Messages";
+  const tab: string = "Messages";
 
-  if (!profiles[user_profile?.pubkey] || profiles[user_profile?.pubkey]?.failed) {
+  if (
+    !profiles[user_profile?.pubkey] ||
+    profiles[user_profile?.pubkey]?.failed
+  ) {
     profiles[user_profile?.pubkey] = user_profile;
   } else {
     user_profile = profiles[user_profile?.pubkey];

@@ -1,7 +1,18 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useState } from "react";
+import { SetBooleanState, SetStringState } from "../../lib/types";
 
-const MessageCompose = ({ message, setMessage, setOnSubmit }) => {
+interface MessageComposeProps {
+  message: string;
+  setMessage: SetStringState;
+  setOnSubmit: SetBooleanState;
+}
+
+const MessageCompose: React.FC<MessageComposeProps> = ({
+  message,
+  setMessage,
+  setOnSubmit,
+}) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setOnSubmit(true);
@@ -11,16 +22,9 @@ const MessageCompose = ({ message, setMessage, setOnSubmit }) => {
     setMessage(e.target.value);
   };
 
-  // <input
-  //         type="text"
-  //         placeholder="Type a message..."
-  //         value={message}
-  //         onChange={handleChange}
-  //         onSubmit={handleSubmit}
-  //         className="rounded-full w-full bg-neutral-900 border border-neutral-600 py-1 px-3"
-  //       />
-
-  const active = message ? "bg-indigo-800 border-indigo-900 cursor-pointer text-white" : "cursor-default border-neutral-600 text-neutral-700";
+  const active_style: string = message
+    ? "bg-indigo-800 border-indigo-900 cursor-pointer text-white"
+    : "cursor-default border-neutral-600 text-neutral-700";
 
   return (
     <>
@@ -38,7 +42,10 @@ const MessageCompose = ({ message, setMessage, setOnSubmit }) => {
           />
           <button
             type="submit"
-           className={"border mx-1 px-3 py-1 h-full transition duration-200 " + active}>
+            className={
+              "border mx-1 px-3 py-1 h-full transition duration-200 " +
+              active_style
+            }>
             Send
           </button>
         </form>

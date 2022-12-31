@@ -1,7 +1,7 @@
-const getFormattedMsgRecvTime = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-  const today = new Date();
-  const seven_days_ago = new Date();
+export const getFormattedMsgRecvTime = (timestamp: number) => {
+  const date: Date = new Date(timestamp * 1000);
+  const today: Date = new Date();
+  const seven_days_ago: Date = new Date();
   seven_days_ago.setDate(seven_days_ago.getDate() - 7);
 
   if (date.toDateString() === today.toDateString()) {
@@ -25,9 +25,9 @@ const getFormattedMsgRecvTime = (timestamp: number) => {
 };
 
 //given unix timestamp, return only the time
-const getTime = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-  let result = date.toLocaleTimeString([], {
+export const getTime = (timestamp: number) => {
+  const date: Date = new Date(timestamp * 1000);
+  let result: string = date.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -37,15 +37,15 @@ const getTime = (timestamp: number) => {
   return result;
 };
 
-const getFormattedTimeStr = (timestamp: number) => {
-  const date = new Date(timestamp * 1000);
-  const today = new Date();
-  const yesterday = new Date();
+export const getFormattedTimeStr = (timestamp: number) => {
+  const date: Date = new Date(timestamp * 1000);
+  const today: Date = new Date();
+  const yesterday: Date = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const seven_days_ago = new Date();
+  const seven_days_ago: Date = new Date();
   seven_days_ago.setDate(seven_days_ago.getDate() - 7);
 
-  let timeStr = date.toLocaleTimeString([], {
+  let timeStr: string = date.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -79,4 +79,3 @@ const getFormattedTimeStr = (timestamp: number) => {
 };
 
 export default getFormattedMsgRecvTime;
-export { getFormattedTimeStr, getTime };
