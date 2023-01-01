@@ -1,9 +1,16 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
-import { SetBooleanState, SetConversationsListState, SetListenFuncState, SetNumberState, SetProfilesState, SetStringState } from "../../lib/types";
+import {
+  SetBooleanState,
+  SetConversationsListState,
+  SetListenFuncState,
+  SetNumberState,
+  SetProfilesState,
+  SetStringState,
+} from "../../lib/types";
 
-interface EditProfileModalProps {
-  setShowModal: SetBooleanState;
+interface PrivKeyModalProps {
+  setShowPrivKeyModal: SetBooleanState;
   setLastRefresh: SetNumberState;
   setPeer: SetStringState;
   setMessageList: SetConversationsListState;
@@ -12,8 +19,8 @@ interface EditProfileModalProps {
   formRef: any;
 }
 
-const EditProfileModal: React.FC<EditProfileModalProps> = ({
-  setShowModal,
+const PrivKeyModal: React.FC<PrivKeyModalProps> = ({
+  setShowPrivKeyModal,
   setLastRefresh,
   setPeer,
   setMessageList,
@@ -32,13 +39,13 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
         listenFunc.then(() => {
           setListenFunc(invoke("sub_to_msg_events"));
           console.log("listening on new private key");
-          
+
           setPeer("");
           setMessageList([]);
           setLastRefresh(Date.now() - 999_999);
           formRef.current.reset();
           router.push("/profile");
-          setShowModal(false);
+          setShowPrivKeyModal(false);
         });
       });
     });
@@ -55,7 +62,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               <h3 className="text-3xl font-semibold">Import Private Key</h3>
               <button
                 className="p-1 ml-auto bg-transparent border-0 text-black opacity-30 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
-                onClick={() => setShowModal(false)}>
+                onClick={() => setShowPrivKeyModal(false)}>
                 <span className="bg-transparent text-white h-6 w-6 text-2xl block outline-none focus:outline-none">
                   ×
                 </span>
@@ -68,6 +75,10 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 handleImportPrivkey(e);
               }}>
               <div className="relative py-3 px-5 flex-auto">
+                <p>
+                  Enter the private key you want to import. This will replace
+                  your current private key.
+                </p>
                 <input
                   type="text"
                   className="bg-neutral-700 rounded-sm py-1 px-2 text-neutral-200 my-3 w-[500px] placeholder-neutral-400 focus:placeholder-opacity-0"
@@ -79,11 +90,11 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 <button
                   className="text-gray-200 active:text-gray-500 background-transparent font-medium px-3 pt-1 outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                   type="button"
-                  onClick={() => setShowModal(false)}>
+                  onClick={() => setShowPrivKeyModal(false)}>
                   Cancel
                 </button>
                 <button
-                  className="bg-indigo-800 text-white active:bg-indigo-900 font-medium px-3 py-1 rounded-sm"
+                  className="bg-indigo-800 text-white hover:bg-indigo-800 active:bg-opacity-70 font-medium px-3 py-1 rounded-sm"
                   type="submit">
                   Import
                 </button>
@@ -97,4 +108,4 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   );
 };
 
-export default EditProfileModal;
+export default PrivKeyModal;

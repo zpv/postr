@@ -34,6 +34,7 @@ export type SetListenFuncState = Dispatch<SetStateAction<Promise<void>>>;
 export type SetBooleanState = Dispatch<SetStateAction<boolean>>;
 export type SetStringState = Dispatch<SetStateAction<string>>;
 export type SetMessagesState = Dispatch<SetStateAction<SingleMessage[]>>;
+export type SetStringListState = Dispatch<SetStateAction<string[]>>;
 
 export type DmEvent = {
   event: string;

@@ -1,8 +1,17 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import EditProfileModal from "../EditProfileModal";
-import { ConversationsListItem, Profile, Profiles, SetConversationsListState, SetListenFuncState, SetNumberState, SetProfilesState } from "../../lib/types";
+import PrivKeyModal from "../PrivKeyModal";
+import {
+  ConversationsListItem,
+  Profile,
+  Profiles,
+  SetConversationsListState,
+  SetListenFuncState,
+  SetNumberState,
+  SetProfilesState,
+} from "../../lib/types";
+import ConfigRelaysModal from "../ConfigRelaysModal";
 
 const style =
   " text-neutral-500 focus:text-white bg-neutral-700 bg-opacity-20 rounded-sm px-2 py-1 w-full placeholder-neutral-500 focus:placeholder-opacity-0";
@@ -26,7 +35,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
   setListenFunc,
   listenFunc,
 }) => {
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showPrivKeyModal, setShowPrivKeyModal] = useState<boolean>(false);
+  const [showConfigRelaysModal, setShowConfigRelaysModal] =
+    useState<boolean>(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState<boolean>(false);
   const [attempts, setAttempts] = useState<number>(1);
   const router = useRouter();
@@ -143,10 +154,24 @@ const EditProfile: React.FC<EditProfileProps> = ({
 
   return (
     <>
-      {showModal ? (
-        <EditProfileModal
+      {showPrivKeyModal ? (
+        <PrivKeyModal
           {...{
-            setShowModal,
+            setShowPrivKeyModal,
+            setLastRefresh,
+            setPeer,
+            setMessageList,
+            formRef,
+            setListenFunc,
+            listenFunc,
+          }}
+        />
+      ) : null}
+
+      {showConfigRelaysModal ? (
+        <ConfigRelaysModal
+          {...{
+            setShowConfigRelaysModal,
             setLastRefresh,
             setPeer,
             setMessageList,
@@ -207,7 +232,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
             {isProfileLoaded && (
               <button
                 type="submit"
-                className="bg-indigo-800 rounded-sm px-3 py-1 font-medium text-white my-2 hover:ripple-bg-indigo-800 w-min">
+                className="bg-indigo-800 rounded-sm px-3 py-1 font-medium text-white my-2 hover:bg-opacity-70 active:bg-opacity-40 w-min">
                 Save
               </button>
             )}
@@ -238,20 +263,21 @@ const EditProfile: React.FC<EditProfileProps> = ({
               />
               <button
                 onClick={copyToClipboard}
-                className="bg-neutral-800 rounded-sm px-3 py-1 ml-1 font-medium text-white hover:ripple-bg-indigo-700">
+                className="bg-neutral-800 rounded-sm px-3 py-1 ml-1 font-medium text-white hover:bg-indigo-800 transition duration-100 active:bg-opacity-70">
                 Copy
               </button>
             </div>
           </div>
           <div className="flex items-center my-2">
             <button
-              className="bg-indigo-800 font-medium hover:bg-opacity-50 border border-opacity-0 border-indigo-800 transition duration-300 rounded-sm px-3 py-1 text-white mb-3 active:bg-neutral-800"
-              onClick={() => setShowModal(true)}
+              className="bg-indigo-800 font-medium hover:bg-opacity-70 border border-opacity-0 border-indigo-800 rounded-sm px-3 py-1 text-white mb-3 active:bg-opacity-40"
+              onClick={() => setShowPrivKeyModal(true)}
               type="button">
               Import private key
             </button>
             <button
-              className="bg-neutral-900 font-medium rounded-sm mx-2 px-3 py-1 border border-indigo-800 hover:border-opacity-0 text-white mb-3 transition duration-300 hover:bg-indigo-800 active:bg-neutral-800"
+              className="bg-neutral-900 font-medium rounded-sm mx-2 px-3 py-1 border border-indigo-800 text-white mb-3 transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
+              onClick={() => setShowConfigRelaysModal(true)}
               type="button">
               Configure relays
             </button>

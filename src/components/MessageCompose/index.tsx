@@ -23,7 +23,7 @@ const MessageCompose: React.FC<MessageComposeProps> = ({
   };
 
   const active_style: string = message
-    ? "bg-indigo-800 border-indigo-900 cursor-pointer text-white"
+    ? "bg-indigo-800 border-indigo-900 cursor-pointer text-white active:bg-opacity-70"
     : "cursor-default border-neutral-600 text-neutral-700";
 
   return (
