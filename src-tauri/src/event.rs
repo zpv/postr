@@ -167,11 +167,11 @@ impl Event {
                 // since this is allowed, we will provide the delegatee
                 Some(delegator.into())
             } else {
-                debug!("an event failed to satisfy delegation conditions");
+                // debug!("an event failed to satisfy delegation conditions");
                 None
             }
         } else {
-            debug!("event had had invalid delegation signature");
+            // debug!("event had had invalid delegation signature");
             None
         }
     }

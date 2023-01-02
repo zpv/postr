@@ -175,7 +175,6 @@ const EditProfile: React.FC<EditProfileProps> = ({
             setLastRefresh,
             setPeer,
             setMessageList,
-            formRef,
             setListenFunc,
             listenFunc,
           }}

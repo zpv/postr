@@ -17,7 +17,6 @@ interface PrivKeyModalProps {
   setMessageList: SetConversationsListState;
   setListenFunc: SetListenFuncState;
   listenFunc: Promise<void>;
-  formRef: any;
 }
 
 const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
@@ -25,7 +24,6 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
   setLastRefresh,
   setPeer,
   setMessageList,
-  formRef,
   listenFunc,
   setListenFunc,
 }) => {
@@ -35,36 +33,23 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
 
   useEffect(() => {
     // mock relays
-    setRelays([
-      "wss://satstacker.cloud",
-      "wss://relay.damus.io",
-      "wss://relay.nostr.info",
-    ]);
-    // invoke("get_relays").then((res: string[]) => {
-    //   setRelays(res);
-    // });
+    // setRelays([
+    //   "wss://satstacker.cloud",
+    //   "wss://relay.damus.io",
+    //   "wss://relay.nostr.info",
+    // ]);
+    invoke("get_relays").then((res: string[]) => {
+      setRelays(res);
+    });
   }, []);
 
   const handleConfigRelays = (e) => {
     e.preventDefault();
-    // const privkey = e.target[0].value;
-    // invoke("set_privkey", { privkey }).then((res) => {
-    //   invoke("unsub_from_msg_events").then(() => {
-    //     console.log("unsubscribed from old private key");
-    //     listenFunc.then(() => {
-    //       setListenFunc(invoke("sub_to_msg_events"));
-    //       console.log("listening on new private key");
-
-    //       setPeer("");
-    //       setMessageList([]);
-    //       setLastRefresh(Date.now() - 999_999);
-    //       formRef.current.reset();
-    //       router.push("/profile");
-    //       setShowConfigRelaysModal(false);
-    //     });
-    //   });
-    // });
-    setShowConfigRelaysModal(false);
+    invoke("set_relays", {
+      relays,
+    }).then(() => {
+      setShowConfigRelaysModal(false);
+    });
   };
 
   return (
@@ -88,8 +73,10 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
             {/* <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleConfigRelays(e);
-              }}> */}
+                // handleConfigRelays(e);
+              }}
+              key="config-relays-form"
+              > */}
             <div>
               <div className="relative p-6 flex-auto">
                 {/* <p className="my-4 text-gray-500 text-lg leading-relaxed">
@@ -151,22 +138,20 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
+                        const value: string = inputRef.current.value
+                          .trim()
+                          .toLowerCase();
                         inputRef.current.value = "";
                         const newRelays = relays.map((relay) =>
                           relay.toLowerCase()
                         );
 
-                        if (
-                          inputRef.current.value === "" ||
-                          newRelays.includes(
-                            inputRef.current.value.toLowerCase()
-                          )
-                        )
-                          return;
+                        if (value === "" || newRelays.includes(value)) return;
 
-                        newRelays.push(inputRef.current.value);
+                        newRelays.push(value);
                         setRelays(newRelays);
-                      }}>
+                      }}
+                      key="add-relay-form">
                       <div
                         className="flex flex-row items-center justify-between"
                         key="add-relay">
@@ -174,11 +159,14 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
                           type="text"
                           className="border border-neutral-700 w-full bg-opacity-0 bg-neutral-700 rounded-tl-full rounded-bl-full px-3 py-1 mr-1 mb-1 text-gray-200 placeholder-neutral-400 focus:placeholder-opacity-0"
                           placeholder="Enter a relay you want to add"
+                          autoComplete="off"
+                          autoFocus={true}
                           ref={inputRef}
                         />
                         <button
                           className="border-green-600 border text-white hover:bg-green-600 active:bg-opacity-70 font-medium px-3 py-1 mb-1 w-9"
-                          type="submit">
+                          type="submit"
+                          key="add-relay-button">
                           +
                         </button>
                       </div>
@@ -196,7 +184,9 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
                 </button>
                 <button
                   className="bg-indigo-800 text-white hover:bg-opacity-70 active:bg-opacity-40 font-medium px-3 py-1 rounded-sm"
-                  type="submit">
+                  type="button"
+                  onClick={handleConfigRelays}
+                  key="config-relays-button">
                   Save
                 </button>
               </div>

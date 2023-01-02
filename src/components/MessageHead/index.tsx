@@ -24,9 +24,9 @@ const MessageHead: React.FC<MessageHeadProps> = ({
 
   return (
     <>
-      <div className="bg-neutral-800 flex flex-row border-b border-neutral-800 group">
+      <div className="bg-neutral-800 flex flex-row border-b border-neutral-800">
         <div
-          className="cursor-pointer flex flex-row hover:ripple-bg-neutral-700"
+          className="cursor-pointer flex flex-row hover:ripple-bg-neutral-700 group"
           onClick={copyToClipboard}>
           <img
             src={picture || `https://robohash.org/${peer}.png`}
@@ -59,7 +59,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
             </div>
           </div>
         </div>
-        {/* <div className="flex flex-row w-full justify-end">
+        <div className="flex flex-row w-full justify-end">
           <div className="my-auto p-2 mx-3 cursor-pointer hover:ripple-bg-neutral-700 rounded-lg opacity-50">
             <img
               src={info?.src || ""}
@@ -67,7 +67,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
               className="w-5 h-5"
             />
           </div>
-        </div> */}
+        </div>
       </div>
     </>
   );

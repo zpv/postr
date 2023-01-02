@@ -56,7 +56,7 @@ pub fn build_pool(
     // is only an issue with the first time we run.
 
     while !full_path.exists() && wait_for_db {
-        debug!("Database reader pool is waiting on the database to be created...");
+        // debug!("Database reader pool is waiting on the database to be created...");
         thread::sleep(Duration::from_millis(500));
     }
 
@@ -325,7 +325,7 @@ fn query_from_filter(f: &ReqFilter) -> (String, Vec<Box<dyn ToSql>>) {
         for auth in authvec {
             match hex_range(auth) {
                 Some(HexSearch::Exact(ex)) => {
-                    debug!("Exact author search: {:?}", ex);
+                    // debug!("Exact author search: {:?}", ex);
                     auth_searches.push("author=? OR delegated_by=?".to_owned());
                     params.push(Box::new(ex.clone()));
                     params.push(Box::new(ex));

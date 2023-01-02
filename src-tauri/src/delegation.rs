@@ -119,11 +119,11 @@ pub fn validate_delegation(
                 // return the parsed condition query
                 cond_query.parse::<ConditionQuery>().ok()
             } else {
-                debug!("client sent an delegation signature that did not validate");
+                // debug!("client sent an delegation signature that did not validate");
                 None
             }
         } else {
-            debug!("client sent malformed delegation pubkey");
+            // debug!("client sent malformed delegation pubkey");
             None
         }
     } else {

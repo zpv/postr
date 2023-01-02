@@ -22,13 +22,13 @@ function Feed({ user_profile }) {
   const tab: string = "Feed";
   const pageBody = (
     <>
-      <p>feed2</p>
+      <h1 className="mx-auto my-auto text-xl">Coming soon!</h1>
     </>
   );
 
   return (
     <div className="bg-neutral-900 w-full h-full overflow-hidden">
-      <div className="grid grid-cols-[180px_240px_1fr] h-full">
+      <div className="flex h-full">
         <Layout {...{ user_profile }} {...{ tab }}>
           {pageBody}
         </Layout>

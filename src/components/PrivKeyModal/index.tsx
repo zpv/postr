@@ -83,6 +83,7 @@ const PrivKeyModal: React.FC<PrivKeyModalProps> = ({
                   type="text"
                   className="bg-neutral-700 rounded-sm py-1 px-2 text-neutral-200 my-3 w-[500px] placeholder-neutral-400 focus:placeholder-opacity-0"
                   placeholder="Private key"
+                  autoFocus={true}
                 />
               </div>
               {/*footer*/}

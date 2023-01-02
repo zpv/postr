@@ -71,7 +71,7 @@ pub fn user_profile(
     }];
 
     let req = Req::new(None, filters);
-    debug!("req: {:?}", req.to_string());
+    // debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
 
     // get user profile from pubkey
@@ -147,7 +147,7 @@ pub fn user_convos(
     ];
 
     let req = Req::new(Some("convos"), filters);
-    debug!("req: {:?}", req.to_string());
+    // debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
 
     info!("Invoked user_convos with {:?}", identity.public_key_str);
@@ -197,7 +197,7 @@ pub fn user_convos(
 
         result.sort_by(|a, b| b.last_message.cmp(&a.last_message));
 
-        debug!("result: {:?}", result);
+        // debug!("result: {:?}", result);
         info!("query ran in {:?}", start.elapsed());
 
         Ok(result)
@@ -277,11 +277,11 @@ pub fn user_dms(
     };
 
     let req = Req::new(Some(&format!("{}-dms", peer)), subscription.clone().filters);
-    debug!("req: {:?}", req.to_string());
+    // debug!("req: {:?}", req.to_string());
     relay_pool.lock().unwrap().send(req.to_string());
 
     let (q, p) = query_from_sub(&subscription);
-    debug!("query: {}", q);
+    // debug!("query: {}", q);
 
     if let Ok(conn) = db_pool.get() {
         let mut statement = conn.prepare(&q).unwrap();
@@ -302,7 +302,7 @@ pub fn user_dms(
                     };
 
                 // deserialize the message as event
-                debug!("event: {:?}", decrypted_message);
+                // debug!("event: {:?}", decrypted_message);
 
                 // if event.pubkey is our pubkey, then the recipient is the peer
                 let recipient = if event.pubkey == identity.public_key_str {
@@ -327,7 +327,7 @@ pub fn user_dms(
             result.push(event.unwrap());
         }
 
-        debug!("result: {:?}", result);
+        // debug!("result: {:?}", result);
         result.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
         result = result
             .into_iter()
@@ -381,11 +381,11 @@ pub async fn sub_to_msg_events(
     };
 
     while let Ok(event) = &bcast_rx.recv().await {
-        debug!("event: {:?}", event);
+        // debug!("event: {:?}", event);
 
         // if event string is "stop subscription", then stop the subscription
         if event.content == "stop subscription" {
-            debug!("stopping subscription");
+            // debug!("stopping subscription");
             break;
         }
 
@@ -409,7 +409,7 @@ pub async fn sub_to_msg_events(
             };
 
             // deserialize the message as event
-            debug!("event: {:?}", decrypted_message);
+            // debug!("event: {:?}", decrypted_message);
             let recipient = if event.pubkey == identity.public_key_str {
                 x_pub_key.to_string()
             } else {
@@ -425,7 +425,7 @@ pub async fn sub_to_msg_events(
 
             app_handle.emit_all("dm", private_message).unwrap();
 
-            debug!("matches");
+            // debug!("matches");
         }
     }
 
@@ -516,5 +516,20 @@ pub fn set_user_info(
     let json_stringified = json!(["EVENT", event]).to_string();
 
     relay_pool.lock().unwrap().send(json_stringified);
+    Ok(())
+}
+
+#[command]
+pub fn get_relays(relay_pool: tauri::State<Arc<Mutex<RelayPool>>>) -> Result<Vec<String>, ()> {
+    let relays = relay_pool.lock().unwrap().get_relays();
+    Ok(relays)
+}
+
+#[command]
+pub fn set_relays(
+    relays: Vec<&str>,
+    relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
+) -> Result<(), ()> {
+    relay_pool.lock().unwrap().set_relays(relays);
     Ok(())
 }
