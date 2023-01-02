@@ -120,7 +120,12 @@ impl RelayPool {
 
     pub fn send(&mut self, msg: String) {
         for tx in self.broadcast_txs.iter() {
-            tx.send(msg.clone()).unwrap();
+            match tx.send(msg.clone()) {
+                Ok(_) => {}
+                Err(e) => {
+                    error!("Error sending to a relay: {}", e);
+                }
+            }
         }
     }
 }
@@ -156,6 +161,16 @@ impl RelaySocket {
                     info!("Shutting down relay {}", relay);
                     break;
                 }
+
+                // check if we should shutdown with timeout
+                tokio::select! {
+                    _ = shutdown_listen.recv() => {
+                        shutdown = true;
+                        continue;
+                    }
+                    _ = tokio::time::sleep(Duration::from_secs(1)) => {}
+                }
+
                 // let tx_clone_2 = tx_clone.clone();
                 // let mut rx2 = tx_clone_2.subscribe();
                 let url = Url::parse(&relay).unwrap();
@@ -165,7 +180,7 @@ impl RelaySocket {
                         s
                     }
                     Err(e) => {
-                        error!("Error connecting to {}: {:?}", relay, e);
+                        error!("Error connecting to {}", relay);
                         // wait 5 seconds before trying to reconnect
                         tokio::time::sleep(Duration::from_secs(5)).await;
                         continue;
@@ -196,13 +211,13 @@ impl RelaySocket {
                 let mut rx = tx_clone.subscribe();
                 // Listen to shutdown signal
                 loop {
-                    info!("Listening for next message on {}...", relay);
+                    // info!("Listening for next message on {}...", relay);
                     tokio::select! {
                         _ = shutdown_listen.recv() => {
                             shutdown = true;
                             break;
                         }
-                        // send tx message to relay 
+                        // send tx message to relay
                         send_msg = rx.recv() => {
                             if let Ok(msg) = send_msg {
                                 info!("Sending message to {:?}: {:?}", relay, msg);
@@ -211,7 +226,7 @@ impl RelaySocket {
                             }
                         }
                         msg = read.next() => {
-
+                            debug!("Received message from {}: {:?}", relay, msg);
                             let msg = match msg {
                                 Some(Ok(msg)) => msg,
                                 Some(Err(e)) => {
@@ -257,11 +272,17 @@ impl RelaySocket {
                                                 "received EOSE message from relay {:?}: {:?}",
                                                 relay, eose
                                             );
-                                            if eose.cmd != "EOSE" {
+
+                                            if eose.cmd != "EOSE" && eose.cmd != "NOTICE" {
                                                 error!(
                                                     "received EOSE message with invalid command: {:?}",
                                                     eose.cmd
                                                 );
+                                                continue;
+                                            }
+
+                                            if eose.cmd == "NOTICE" {
+                                                debug!("NOTICE: {:?}", eose.id);
                                                 continue;
                                             }
 
@@ -277,7 +298,7 @@ impl RelaySocket {
                                             write
                                                 // .send(json!(["CLOSE", eose.id]).to_string())
                                                 .send(format!(r#"["CLOSE", "{}"]"#, eose.id).into()).await
-                                                .unwrap(); 
+                                                .unwrap();
                                         }
                                     },
                                     Err(e) => {

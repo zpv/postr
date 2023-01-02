@@ -4,6 +4,10 @@ import Layout from "../../layouts/Layout";
 import { Profile } from "../../lib/types";
 
 EditProfile.getInitialProps = async (ctx) => {
+  if (typeof window === "undefined") {
+    console.log("EditProfile.getInitialProps: typeof window === 'undefined'");
+    return { user: "", user_profile: { pubkey: "", failed: true } };
+  }
   const user_pubkey: string = await invoke<string>("get_pubkey");
   const user_profile: Profile = await invoke<Profile>("user_profile", {
     pubkey: user_pubkey,

@@ -4,8 +4,11 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { Profile } from "../lib/types";
 
 Feed.getInitialProps = async (ctx) => {
-  const user_pubkey: string = await invoke("get_pubkey");
-  console.log(user_pubkey);
+  if (typeof window === "undefined") {
+    console.log("EditProfile.getInitialProps: typeof window === 'undefined'");
+    return { user: "", user_profile: { pubkey: "", failed: true } };
+  }
+  const user_pubkey: string = await invoke<string>("get_pubkey");
   const user_profile: Profile = await invoke<Profile>("user_profile", {
     pubkey: user_pubkey,
   }).catch((e) => {
@@ -15,7 +18,7 @@ Feed.getInitialProps = async (ctx) => {
     };
   });
 
-  return { user_profile };
+  return { user: user_pubkey, user_profile };
 };
 
 function Feed({ user_profile }) {
