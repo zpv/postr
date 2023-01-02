@@ -116,7 +116,31 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
         peer === event.payload.author ||
         (user === event.payload.author && peer === event.payload.recipient)
       ) {
-        setConversation((prev) => [...prev, event.payload]);
+        setConversation((prev) => {
+          const new_conversation: SingleMessage[] = [...prev];
+
+          // to save time, check if should be pushed immediately
+          if (new_conversation.length === 0 || new_conversation[new_conversation.length - 1].timestamp < event.payload.timestamp) {
+            new_conversation.push(event.payload); 
+            return new_conversation;
+          }
+
+          // search for insertion point
+          let index: number = new_conversation.length;
+          let low: number = 0;
+          let high: number = new_conversation.length - 1;
+          while (low <= high) {
+            const mid: number = Math.floor((low + high) / 2);
+            if (new_conversation[mid].timestamp > event.payload.timestamp) {
+              index = mid;
+              high = mid - 1;
+            } else {
+              low = mid + 1;
+            }
+          }
+          new_conversation.splice(index, 0, event.payload);
+          return new_conversation;
+        });
       }
 
       console.log(event);

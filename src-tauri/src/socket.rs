@@ -155,7 +155,7 @@ impl RelaySocket {
 
         let mut shutdown = false;
 
-        let t = tokio::spawn(async move {
+        tokio::spawn(async move {
             loop {
                 if shutdown {
                     info!("Shutting down relay {}", relay);
@@ -173,7 +173,16 @@ impl RelaySocket {
 
                 // let tx_clone_2 = tx_clone.clone();
                 // let mut rx2 = tx_clone_2.subscribe();
-                let url = Url::parse(&relay).unwrap();
+
+                let url = match Url::parse(&relay) {
+                    Ok(url) => url,
+                    Err(e) => {
+                        error!("Invalid relay url: {}", e);
+                        shutdown = true;
+                        continue;
+                    }
+                };
+
                 let (socket, _) = match connect_async(url).await {
                     Ok(s) => {
                         info!("Connected to {}", relay);
@@ -318,7 +327,14 @@ impl RelaySocket {
 
     pub fn shutdown(&self) {
         if let Some(tx) = &self.shutdown_tx {
-            tx.send(()).unwrap();
+            match tx.send(()) {
+                Ok(_) => {
+                    info!("shutdown signal sent");
+                }
+                Err(e) => {
+                    error!("error sending shutdown signal: {:?}", e);
+                }
+            }
         }
     }
 }
