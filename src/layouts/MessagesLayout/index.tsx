@@ -106,6 +106,7 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
 
   useEffect(() => {
     const unlisten: Promise<UnlistenFn> = listen("dm", (event: DmEvent) => {
+      console.log("listening");
       // if dm is for this peer, add it to the conversation
       if (
         peer === event.payload.author ||

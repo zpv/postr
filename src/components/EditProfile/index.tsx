@@ -40,6 +40,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
     useState<boolean>(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState<boolean>(false);
   const [attempts, setAttempts] = useState<number>(1);
+  const [changesMade, setChangesMade] = useState<boolean>(false);
   const router = useRouter();
   const formRef = useRef(null);
   const msgRef = useRef(null);
@@ -47,15 +48,15 @@ const EditProfile: React.FC<EditProfileProps> = ({
   useEffect(() => {
     msgRef.current.innerText = "";
     if (user_profile?.failed) {
-      formRef.current[0].disabled = true;
-      formRef.current[1].disabled = true;
-      formRef.current[2].disabled = true;
-      formRef.current[3].disabled = true;
-      // show disabled pointer cursor
-      formRef.current[0].classList.add("cursor-not-allowed");
-      formRef.current[1].classList.add("cursor-not-allowed");
-      formRef.current[2].classList.add("cursor-not-allowed");
-      formRef.current[3].classList.add("cursor-not-allowed");
+      // formRef.current[0].disabled = true;
+      // formRef.current[1].disabled = true;
+      // formRef.current[2].disabled = true;
+      // formRef.current[3].disabled = true;
+      // // show disabled pointer cursor
+      // formRef.current[0].classList.add("cursor-not-allowed");
+      // formRef.current[1].classList.add("cursor-not-allowed");
+      // formRef.current[2].classList.add("cursor-not-allowed");
+      // formRef.current[3].classList.add("cursor-not-allowed");
 
       msgRef.current.innerText =
         "Unable to load profile. (still loading or relay(s) down)";
@@ -144,6 +145,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
         return prev;
       });
       router.push("/profile");
+      // msgRef.current.innerText = "Profile updated!";
+      setChangesMade(false);
     });
   };
 
@@ -184,6 +187,10 @@ const EditProfile: React.FC<EditProfileProps> = ({
       <h1 className="text-2xl">Edit Profile</h1>
       <form
         ref={formRef}
+        onChange={(e) => {
+          e.preventDefault();
+          setChangesMade(true);
+        }}
         onSubmit={(e) => {
           e.preventDefault();
           handleEditProfile(e);
@@ -228,13 +235,18 @@ const EditProfile: React.FC<EditProfileProps> = ({
             />
           </div>
           <div className="flex items-center col-span-2  ">
-            {isProfileLoaded && (
-              <button
-                type="submit"
-                className="bg-indigo-800 rounded-sm px-3 py-1 font-medium text-white my-2 hover:bg-opacity-70 active:bg-opacity-40 w-min">
-                Save
-              </button>
-            )}
+            {/* {isProfileLoaded && ( */}
+            <button
+              type="submit"
+              className={"rounded-sm px-3 py-1 mr-2 font-medium my-2 w-min " + 
+                (changesMade
+                  ? "bg-indigo-800 text-white hover:bg-opacity-70 active:bg-opacity-40"
+                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed")
+              }
+              disabled={!changesMade}>
+              Save
+            </button>
+            {/* )} */}
             {!isProfileLoaded && (
               <button
                 type="button"
