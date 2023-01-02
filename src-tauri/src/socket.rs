@@ -148,13 +148,22 @@ impl RelaySocket {
 
         let tx_clone = tx.clone();
 
+        let mut shutdown = false;
+
         let t = tokio::spawn(async move {
             loop {
-                let tx_clone_2 = tx_clone.clone();
-                let mut rx2 = tx_clone_2.subscribe();
+                if shutdown {
+                    info!("Shutting down relay {}", relay);
+                    break;
+                }
+                // let tx_clone_2 = tx_clone.clone();
+                // let mut rx2 = tx_clone_2.subscribe();
                 let url = Url::parse(&relay).unwrap();
-                let (mut socket, _) = match connect_async(url).await {
-                    Ok(s) => s,
+                let (socket, _) = match connect_async(url).await {
+                    Ok(s) => {
+                        info!("Connected to {}", relay);
+                        s
+                    }
                     Err(e) => {
                         error!("Error connecting to {}: {:?}", relay, e);
                         // wait 5 seconds before trying to reconnect
@@ -177,99 +186,109 @@ impl RelaySocket {
                 // });
 
                 // Create a channel to send messages to the server
-                let send_handler = tokio::spawn(async move {
-                    while let Ok(msg) = &rx2.recv().await {
-                        info!("Sending message: {:?}", msg);
-                        let msg = Message::Text(msg.to_string());
-                        write.send(msg).await.unwrap();
-                    }
-                });
-
+                // let send_handler = tokio::spawn(async move {
+                //     while let Ok(msg) = &rx2.recv().await {
+                //         info!("Sending message: {:?}", msg);
+                //         let msg = Message::Text(msg.to_string());
+                //         write.send(msg).await.unwrap();
+                //     }
+                // });
+                let mut rx = tx_clone.subscribe();
                 // Listen to shutdown signal
-
-                tokio::select! {
-                    _ = shutdown_listen.recv() => {
-                        info!("received shutdown signal");
-                        break;
-                    }
-                    msg = read.next() => {
-
-                        let msg = match msg {
-                            Some(Ok(msg)) => msg,
-                            Some(Err(e)) => {
-                                error!("Error: {:?}", e);
-                                break;
-                            },
-                            None => {
-                                error!("Connection closed");
-                                break;
+                loop {
+                    info!("Listening for next message on {}...", relay);
+                    tokio::select! {
+                        _ = shutdown_listen.recv() => {
+                            shutdown = true;
+                            break;
+                        }
+                        // send tx message to relay 
+                        send_msg = rx.recv() => {
+                            if let Ok(msg) = send_msg {
+                                info!("Sending message to {:?}: {:?}", relay, msg);
+                                let msg = Message::Text(msg.to_string());
+                                write.send(msg).await.unwrap();
                             }
-                        };
+                        }
+                        msg = read.next() => {
 
-                        if msg.is_text() {
-                            let msg = msg.into_text().unwrap();
-                            let parsed_msg = convert_to_msg(msg, None);
+                            let msg = match msg {
+                                Some(Ok(msg)) => msg,
+                                Some(Err(e)) => {
+                                    error!("Error: {:?}", e);
+                                    break;
+                                },
+                                None => {
+                                    error!("Connection closed");
+                                    break;
+                                }
+                            };
 
-                            match parsed_msg {
-                                Ok(m) => match m {
-                                    NostrMessage::EventMsg(ec) => {
-                                        let parsed: Result<Event> = Result::<Event>::from(ec);
+                            if msg.is_text() {
+                                let msg = msg.into_text().unwrap();
+                                let parsed_msg = convert_to_msg(msg, None);
 
-                                        match parsed {
-                                            Ok(mut e) => {
-                                                let id_prefix: String = e.id.chars().take(8).collect();
-                                                e.seen_by = vec![relay.clone()];
-                                                debug!(
-                                                        "successfully parsed/validated event: {:?} relay: {:?}",
-                                                        id_prefix, &relay
-                                                    );
+                                match parsed_msg {
+                                    Ok(m) => match m {
+                                        NostrMessage::EventMsg(ec) => {
+                                            let parsed: Result<Event> = Result::<Event>::from(ec);
 
-                                                if let Err(_) = &event_tx.send(e.clone()).await {
-                                                    error!("receiver dropped");
-                                                    break;
+                                            match parsed {
+                                                Ok(mut e) => {
+                                                    let id_prefix: String = e.id.chars().take(8).collect();
+                                                    e.seen_by = vec![relay.clone()];
+                                                    debug!(
+                                                            "successfully parsed/validated event: {:?} relay: {:?}",
+                                                            id_prefix, &relay
+                                                        );
+
+                                                    if let Err(_) = &event_tx.send(e.clone()).await {
+                                                        error!("receiver dropped");
+                                                        break;
+                                                    }
+                                                }
+                                                Err(e) => {
+                                                    error!("client sent an invalid event");
                                                 }
                                             }
-                                            Err(e) => {
-                                                error!("client sent an invalid event");
-                                            }
                                         }
-                                    }
-                                    NostrMessage::EOSEMsg(eose) => {
-                                        info!(
-                                            "received EOSE message from relay {:?}: {:?}",
-                                            relay, eose
-                                        );
-                                        if eose.cmd != "EOSE" {
-                                            error!(
-                                                "received EOSE message with invalid command: {:?}",
-                                                eose.cmd
+                                        NostrMessage::EOSEMsg(eose) => {
+                                            info!(
+                                                "received EOSE message from relay {:?}: {:?}",
+                                                relay, eose
                                             );
-                                            continue;
+                                            if eose.cmd != "EOSE" {
+                                                error!(
+                                                    "received EOSE message with invalid command: {:?}",
+                                                    eose.cmd
+                                                );
+                                                continue;
+                                            }
+
+                                            if eose.id == "cid" {
+                                                continue;
+                                            }
+
+                                            info!(
+                                                "sending CLOSE {} message to relay: {:?}",
+                                                eose.id, relay
+                                            );
+
+                                            write
+                                                // .send(json!(["CLOSE", eose.id]).to_string())
+                                                .send(format!(r#"["CLOSE", "{}"]"#, eose.id).into()).await
+                                                .unwrap(); 
                                         }
-
-                                        if eose.id == "cid" {
-                                            continue;
-                                        }
-
-                                        info!(
-                                            "sending CLOSE {} message to relay: {:?}",
-                                            eose.id, relay
-                                        );
-
-                                        tx_clone_2
-                                            .send(json!(["CLOSE", eose.id]).to_string())
-                                            .unwrap();
+                                    },
+                                    Err(e) => {
+                                        error!("Error: {:?}", e);
                                     }
-                                },
-                                Err(e) => {
-                                    error!("Error: {:?}", e);
                                 }
                             }
                         }
                     }
                 }
-
-                send_handler.abort();
+                // send_handler.abort();
             }
         });
 
