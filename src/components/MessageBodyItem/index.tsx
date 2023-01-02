@@ -27,8 +27,8 @@ const MessageBodyItem: React.FC<MessageBodyItemProps> = ({
     ((rounded_top && " rounded-tr-2xl") || "");
   const authorStyling: string =
     "bg-neutral-800 rounded-br-2xl rounded-tr-2xl" +
-    ((rounded_bottom && " rounded-bl-xl") || "") +
-    ((rounded_top && " rounded-tl-xl") || "");
+    ((rounded_bottom && " rounded-bl-2xl") || "") +
+    ((rounded_top && " rounded-tl-2xl") || "");
 
   const timeStr: string = getTime(timestamp);
 

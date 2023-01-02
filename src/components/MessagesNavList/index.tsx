@@ -65,7 +65,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
             placeholder="Search... (nip05, pubkey, name)"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="rounded-sm w-full bg-neutral-800 px-2 placeholder-neutral-500 focus:placeholder-opacity-0 border border-neutral-700"
+            className="rounded-sm w-full bg-neutral-800 px-2 focus:placeholder-transparent border border-neutral-700"
           />
         </form>
       </div>

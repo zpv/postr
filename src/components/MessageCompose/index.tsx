@@ -38,7 +38,7 @@ const MessageCompose: React.FC<MessageComposeProps> = ({
             value={message}
             onChange={handleChange}
             placeholder="Type a message..."
-            className="rounded-tl-full rounded-bl-full w-full bg-neutral-900 border border-neutral-600 py-1 px-3 placeholder-neutral-500 focus:placeholder-opacity-0"
+            className="rounded-tl-full rounded-bl-full w-full bg-neutral-900 border border-neutral-600 py-1 px-3 focus:placeholder-transparent"
           />
           <button
             type="submit"

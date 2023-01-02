@@ -14,7 +14,7 @@ import {
 import ConfigRelaysModal from "../ConfigRelaysModal";
 
 const style =
-  " text-neutral-500 focus:text-white bg-neutral-700 bg-opacity-20 rounded-sm px-2 py-1 w-full placeholder-neutral-500 focus:placeholder-opacity-0";
+  " text-neutral-500 focus:text-white bg-neutral-700 bg-opacity-20 rounded-sm px-2 py-1 w-full";
 
 interface EditProfileProps {
   user_profile: Profile;
@@ -175,11 +175,6 @@ const EditProfile: React.FC<EditProfileProps> = ({
         <ConfigRelaysModal
           {...{
             setShowConfigRelaysModal,
-            setLastRefresh,
-            setPeer,
-            setMessageList,
-            setListenFunc,
-            listenFunc,
           }}
         />
       ) : null}

@@ -1,43 +1,23 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import {
-  SetBooleanState,
-  SetConversationsListState,
-  SetListenFuncState,
-  SetNumberState,
-  SetProfilesState,
-  SetStringState,
-} from "../../lib/types";
+import text_icon from "../../assets/toggle_text.png";
+import { SetBooleanState } from "../../lib/types";
+import RelaysList from "../RelaysList";
 
 interface PrivKeyModalProps {
   setShowConfigRelaysModal: SetBooleanState;
-  setLastRefresh: SetNumberState;
-  setPeer: SetStringState;
-  setMessageList: SetConversationsListState;
-  setListenFunc: SetListenFuncState;
-  listenFunc: Promise<void>;
 }
 
 const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
   setShowConfigRelaysModal,
-  setLastRefresh,
-  setPeer,
-  setMessageList,
-  listenFunc,
-  setListenFunc,
 }) => {
+  const icon = text_icon;
   const inputRef = useRef(null);
-  const router = useRouter();
+  const textAreaRef = useRef(null);
   const [relays, setRelays] = useState<string[]>([]);
+  const [viewRaw, setViewRaw] = useState<boolean>(false);
 
   useEffect(() => {
-    // mock relays
-    // setRelays([
-    //   "wss://satstacker.cloud",
-    //   "wss://relay.damus.io",
-    //   "wss://relay.nostr.info",
-    // ]);
     invoke("get_relays").then((res: string[]) => {
       setRelays(res);
     });
@@ -45,8 +25,18 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
 
   const handleConfigRelays = (e) => {
     e.preventDefault();
+    let new_relays: string[] = relays;
+    if (viewRaw) {
+      new_relays = textAreaRef.current.value
+        .toLowerCase()
+        .split(/[\n,]/)
+        .map((r: string) => r.trim())
+        .filter((r: string) => r.length > 0)
+        .map((r: string) => r.replace(" ", "-"));
+    }
+    console.log(new_relays);
     invoke("set_relays", {
-      relays,
+      relays: new_relays,
     }).then(() => {
       setShowConfigRelaysModal(false);
     });
@@ -54,130 +44,60 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
 
   return (
     <>
-      <div className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-        <div className="relative w-2/3 my-6 mx-auto max-w-3xl">
+      <div className="justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+        <div className="relative w-2/3 my-10 mx-auto max-w-3xl">
           {/*content*/}
-          <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-neutral-800 outline-none focus:outline-none">
+          <div className="border-0 rounded-lg shadow-lg relative w-full bg-neutral-800 outline-none focus:outline-none">
             {/*header*/}
             <div className="flex items-start justify-between p-5 border-b border-solid border-neutral-700 rounded-t">
               <h3 className="text-3xl font-semibold">Configure Relays</h3>
+              <img
+                className={
+                  "ml-3 mr-auto w-7 opacity-40 border p-1 border-neutral-700 rounded-sm cursor-pointer " +
+                  (viewRaw
+                    ? "bg-neutral-900 border-neutral-600"
+                    : "opacity-100")
+                }
+                src={icon.src}
+                onClick={() => {
+                  if (viewRaw) {
+                    const newRelays = textAreaRef.current.value
+                      .toLowerCase()
+                      .split(/[\n,]/)
+                      .map((r: string) => r.trim())
+                      .filter((r: string) => r.length > 0)
+                      .map((r: string) => r.replace(" ", "-"));
+                    setRelays(newRelays);
+                  }
+                  setViewRaw(!viewRaw);
+                }}></img>
               <button
-                className="p-1 ml-auto bg-transparent border-0 text-black opacity-30 float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
+                className="p-1 ml-auto bg-transparent border-0 text-black opacity-30 float-right text-3xl leading-none font-semibold "
                 onClick={() => setShowConfigRelaysModal(false)}>
-                <span className="bg-transparent text-white h-6 w-6 text-2xl block outline-none focus:outline-none">
+                <span className="bg-transparent text-white h-6 w-6 text-2xl block">
                   ×
                 </span>
               </button>
             </div>
             {/*body*/}
-            {/* <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // handleConfigRelays(e);
-              }}
-              key="config-relays-form"
-              > */}
             <div>
-              <div className="relative p-6 flex-auto">
-                {/* <p className="my-4 text-gray-500 text-lg leading-relaxed">
-                  Add or remove relays.
-                </p> */}
-
-                <div className="flex flex-col">
-                  <label className="leading-loose">Relays</label>
-                  <div className="flex flex-col">
-                    {relays.map((relay, i) => (
-                      <div className="flex flex-row items-center" key={relay}>
-                        <input
-                          type="text"
-                          className="border border-neutral-700 w-full bg-opacity-0 bg-neutral-700 rounded-tl-full rounded-bl-full px-3 py-1 mr-1 mb-1 text-gray-200"
-                          placeholder="Relay"
-                          readOnly
-                          defaultValue={relay}
-                        />
-                        <button
-                          className="border-red-600 border text-white hover:bg-red-600 active:bg-opacity-70 transition font-medium px-3 py-1 mb-1 w-9"
-                          type="button"
-                          onClick={() => {
-                            const newRelays = [...relays];
-                            newRelays.splice(i, 1);
-                            setRelays(newRelays);
-                          }}>
-                          -
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* <div
-                      className="flex flex-row items-center justify-between"
-                      key="add-relay">
-                      <input
-                        type="text"
-                        className="border border-neutral-700 w-full bg-opacity-0 bg-neutral-700 rounded-tl-full rounded-bl-full px-3 py-1 mr-1 mb-1 text-gray-200 placeholder-neutral-400 focus:placeholder-opacity-0"
-                        placeholder="Enter a relay you want to add"
-                        ref={inputRef}
-                      />
-                      <button
-                        className="border-green-600 border text-white hover:bg-green-600 active:bg-opacity-70 font-medium px-3 py-1 mb-1 w-9"
-                        type="button"
-                        onClick={() => {
-                          const newRelays = [...relays];
-                          if (
-                            inputRef.current.value === "" ||
-                            newRelays.includes(inputRef.current.value)
-                          )
-                            return;
-
-                          newRelays.push(inputRef.current.value);
-                          inputRef.current.value = "";
-                          setRelays(newRelays);
-                        }}>
-                        +
-                      </button>
-                    </div> */}
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const value: string = inputRef.current.value
-                          .trim()
-                          .toLowerCase();
-                        inputRef.current.value = "";
-                        const newRelays = relays.map((relay) =>
-                          relay.toLowerCase()
-                        );
-
-                        if (value === "" || newRelays.includes(value)) return;
-
-                        newRelays.push(value);
-                        setRelays(newRelays);
-                      }}
-                      key="add-relay-form">
-                      <div
-                        className="flex flex-row items-center justify-between"
-                        key="add-relay">
-                        <input
-                          type="text"
-                          className="border border-neutral-700 w-full bg-opacity-0 bg-neutral-700 rounded-tl-full rounded-bl-full px-3 py-1 mr-1 mb-1 text-gray-200 placeholder-neutral-400 focus:placeholder-opacity-0"
-                          placeholder="Enter a relay you want to add"
-                          autoComplete="off"
-                          autoFocus={true}
-                          ref={inputRef}
-                        />
-                        <button
-                          className="border-green-600 border text-white hover:bg-green-600 active:bg-opacity-70 font-medium px-3 py-1 mb-1 w-9"
-                          type="submit"
-                          key="add-relay-button">
-                          +
-                        </button>
-                      </div>
-                    </form>
-                  </div>
+              {viewRaw ? (
+                <div className="relative p-6">
+                  <textarea
+                    className="border border-neutral-700 w-full bg-opacity-0 bg-neutral-700 px-3 py-1 text-gray-200 h-64 focus:placeholder-transparent"
+                    placeholder="Enter relays, one per line or comma separated..."
+                    defaultValue={relays.join(",\n")}
+                    autoFocus={true}
+                    ref={textAreaRef}
+                  />
                 </div>
-              </div>
+              ) : (
+                <RelaysList {...{ relays, setRelays, inputRef }} />
+              )}
               {/*footer*/}
               <div className="flex items-center justify-end p-2 border-t border-solid border-neutral-700 rounded-b">
                 <button
-                  className="text-gray-200 active:text-gray-500 background-transparent font-medium px-3 pt-1 outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                  className="text-gray-200 active:text-gray-500 font-medium px-3 pt-1 outline-none focus:outline-none mr-1 mb-1"
                   type="button"
                   onClick={() => setShowConfigRelaysModal(false)}>
                   Cancel
@@ -190,7 +110,6 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
                   Save
                 </button>
               </div>
-              {/* </form> */}
             </div>
           </div>
         </div>
