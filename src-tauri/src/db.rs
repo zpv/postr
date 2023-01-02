@@ -62,7 +62,8 @@ pub fn build_pool(
 
     let manager = SqliteConnectionManager::file(&full_path)
         .with_flags(flags)
-        .with_init(|c| c.execute_batch(STARTUP_SQL));
+        .with_init(|c| c.execute_batch(STARTUP_SQL))
+        .with_init(|c| rusqlite::vtab::array::load_module(&c));
 
     let pool: SqlitePool = r2d2::Pool::builder()
         .test_on_check_out(true) // no noticeable performance hit

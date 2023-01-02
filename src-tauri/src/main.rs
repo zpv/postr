@@ -3,7 +3,7 @@ extern crate websocket;
 
 use postr::cmd::{
     get_pubkey, get_relays, send_dm, set_privkey, set_relays, set_user_info, sub_to_msg_events,
-    unsub_from_msg_events, user_convos, user_dms, user_profile,
+    unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles,
 };
 use postr::db::{self, SqlitePool};
 use postr::event::Event;
@@ -12,7 +12,7 @@ use postr::state::{InnerState, PostrState};
 use postr::{
     __cmd__get_pubkey, __cmd__get_relays, __cmd__send_dm, __cmd__set_privkey, __cmd__set_relays,
     __cmd__set_user_info, __cmd__sub_to_msg_events, __cmd__unsub_from_msg_events,
-    __cmd__user_convos, __cmd__user_dms, __cmd__user_profile, socket,
+    __cmd__user_convos, __cmd__user_dms, __cmd__user_profile, socket, __cmd__user_profiles,
 };
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -137,9 +137,16 @@ fn main() {
         info!("db writer created");
 
         let relays = vec![
-            // "wss://satstacker.cloud",
-            // "wss://relay.damus.io",
-            // "wss://relay.nostr.info",
+            "wss://satstacker.cloud",
+            "wss://relay.damus.io",
+            "wss://nostr-pub.wellorder.net",
+            "wss://nostr.onsats.org",
+            "wss://nostr-relay.wlvs.space",
+            "wss://nostr.bitcoiner.social",
+            "wss://nostr.zebedee.cloud",
+            "wss://relay.nostr.info",
+            "wss://nostr-pub.semisol.dev",
+            "wss://freedom-relay.herokuapp.com/ws",
         ];
 
         let relay_pool = Arc::new(Mutex::new(RelayPool::new(relays, event_tx)));
@@ -172,6 +179,7 @@ fn main() {
                 set_user_info,
                 get_relays,
                 set_relays,
+                user_profiles
             ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");

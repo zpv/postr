@@ -7,14 +7,14 @@ import Message from "../../components/Message";
 import MessagesNav from "../../components/MessagesNav";
 import {
   ConversationsListItem,
-  SingleMessage,
-  Profiles,
-  SetStringState,
-  SetProfilesState,
-  SetNumberState,
-  SetConversationsListState,
-  Profile,
   DmEvent,
+  Profile,
+  Profiles,
+  SetConversationsListState,
+  SetNumberState,
+  SetProfilesState,
+  SetStringState,
+  SingleMessage,
 } from "../../lib/types";
 
 interface MessagesLayoutProps {
@@ -78,8 +78,12 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
     }
     setLastRefresh(Date.now());
     const res: Profiles = profiles;
-    for (const message of messages) {
-      res[message.peer] = await getProfile(message.peer);
+    const raw_profiles = await invoke<Profile[]>("user_profiles", {
+      pubkeys: messages.map((m) => m.peer),
+    });
+
+    for (const raw_profile of raw_profiles) {
+      res[raw_profile.pubkey] = raw_profile;
     }
     return res;
   };

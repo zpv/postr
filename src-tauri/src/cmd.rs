@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -21,6 +22,8 @@ use nostr_rust::utils::get_timestamp;
 use nostr_rust::Identity;
 use rusqlite::named_params;
 use rusqlite::ToSql;
+use rusqlite::params;
+use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tauri::command;
@@ -101,6 +104,62 @@ pub fn user_profile(
         }
     } else {
         Err("no user".to_string())
+    }
+}
+
+#[command]
+pub fn user_profiles(
+    pubkeys: Vec<String>,
+    db_pool: tauri::State<SqlitePool>,
+    relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
+) -> Result<Vec<UserProfile>, String> {
+
+
+    let subscription = Subscription {
+        id: "idk".to_string(),
+        filters: vec![ReqFilter {
+            ids: None,
+            kinds: Some([0].to_vec()),
+            since: None,
+            until: None,
+            authors: Some(pubkeys.iter().map(|s| s.to_string()).collect()),
+            limit: Some(1),
+            tags: None,
+            force_no_match: false,
+        }]
+    };
+
+    let req = Req::new(Some("user_profiles"), subscription.filters);
+    relay_pool.lock().unwrap().send(req.to_string());
+    let values: Rc<Vec<Value>> = Rc::new(pubkeys.into_iter().map(Value::from).collect());
+
+    if let Ok(conn) = db_pool.get() {
+        let mut statement = conn
+            .prepare("SELECT * FROM users WHERE pubkey in rarray(?) AND is_current")
+            .unwrap();
+        let mut users = statement
+            .query_map(params![values], |row| {
+                Ok(UserProfile {
+                    pubkey: row.get(0)?,
+                    name: row.get(1)?,
+                    picture: row.get(2)?,
+                    about: row.get(3)?,
+                    nip05: row.get(4)?,
+                    is_current: row.get(5)?,
+                    created_at: row.get(6)?,
+                    first_seen: row.get(7)?,
+                })
+            })
+            .unwrap();
+
+        let mut user_profiles = Vec::new();
+        while let Some(user) = users.next() {
+            user_profiles.push(user.unwrap());
+        }
+
+        Ok(user_profiles)
+    } else {
+        Err ("no user".to_string())
     }
 }
 
