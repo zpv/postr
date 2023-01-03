@@ -1,9 +1,8 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import PrivKeyModal from "../PrivKeyModal";
+import { useEffect, useRef, useState } from "react";
+import { toNpub } from "../../helpers/pubkey";
 import {
-  ConversationsListItem,
   Profile,
   Profiles,
   SetConversationsListState,
@@ -12,6 +11,7 @@ import {
   SetProfilesState,
 } from "../../lib/types";
 import ConfigRelaysModal from "../ConfigRelaysModal";
+import PrivKeyModal from "../PrivKeyModal";
 
 const style =
   " text-neutral-400 focus:text-white bg-neutral-700 bg-opacity-20 rounded-sm px-2 py-1 w-full outline-none";
@@ -152,7 +152,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
 
   const copyToClipboard = (e) => {
     e.preventDefault();
-    navigator.clipboard.writeText(user_profile?.pubkey);
+    navigator.clipboard.writeText(toNpub(user_profile?.pubkey));
   };
 
   return (
@@ -267,7 +267,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
             <div className="flex items-center">
               <input
                 type="text"
-                value={user_profile?.pubkey || ""}
+                value={toNpub(user_profile?.pubkey) || ""}
                 className={style}
                 readOnly
               />
