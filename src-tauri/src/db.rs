@@ -1,9 +1,9 @@
 use crate::error::Result;
 use crate::event::{single_char_tagname, Event};
-use crate::subscription::{ReqFilter, Subscription};
 use crate::hexrange::hex_range;
 use crate::hexrange::HexSearch;
 use crate::schema::{upgrade_db, STARTUP_SQL};
+use crate::subscription::{ReqFilter, Subscription};
 use crate::utils::{is_hex, is_lower_hex};
 use hex;
 use r2d2;
@@ -13,7 +13,7 @@ use rusqlite::types::ToSql;
 use rusqlite::OpenFlags;
 use std::collections::HashMap;
 use std::fmt::Write as _;
-use std::path::{Path};
+use std::path::Path;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
@@ -47,9 +47,9 @@ pub fn build_pool(
     max_size: u32,
     wait_for_db: bool,
 ) -> SqlitePool {
-		let full_path = Path::new(&tauri::api::path::home_dir().unwrap())
-			.join(POSTR_DATA_DIR)
-			.join(DB_FILE);
+    let full_path = Path::new(&tauri::api::path::home_dir().unwrap())
+        .join(POSTR_DATA_DIR)
+        .join(DB_FILE);
     // small hack; if the database doesn't exist yet, that means the
     // writer thread hasn't finished.  Give it a chance to work.  This
     // is only an issue with the first time we run.
@@ -82,11 +82,12 @@ pub fn build_pool(
 pub fn optimize_db(conn: &mut PooledConnection) -> Result<()> {
     let start = Instant::now();
     conn.execute_batch(
-       "PRAGMA journal_mode = WAL;
+        "PRAGMA journal_mode = WAL;
         PRAGMA synchronous = normal;
         PRAGMA temp_store = memory;
         PRAGMA mmap_size = 30000000000;
-        PRAGMA optimize;")?;
+        PRAGMA optimize;",
+    )?;
     info!("optimize ran in {:?}", start.elapsed());
     Ok(())
 }
@@ -461,7 +462,6 @@ fn query_from_filter(f: &ReqFilter) -> (String, Vec<Box<dyn ToSql>>) {
     }
     (query, params)
 }
-
 
 /// Produce a arbitrary list of '?' parameters.
 fn repeat_vars(count: usize) -> String {
