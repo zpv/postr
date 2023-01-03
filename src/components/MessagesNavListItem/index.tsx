@@ -1,4 +1,5 @@
 import verifIcon from "../../assets/verif.png";
+import { toNpub } from "../../helpers/pubkey";
 import getFormattedMsgRecvTime from "../../helpers/timeHelpers";
 
 interface MessagesNavListItemProps {
@@ -16,11 +17,13 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
   name,
   peer,
 }) => {
-  const display: string = name || (peer && peer.slice(0, 6)) || "";
-  const pubkey_truncated: string =
-    peer && peer.slice(0, 6) + "..." + peer.slice(-6);
+  const npub = toNpub(peer);
+  const npub_truncated: string =
+    npub && npub.slice(0, 6) + "..." + npub.slice(-6);
+  const display: string = name || (npub && npub_truncated) || "";
+
   const hover_text: string =
-    (nip05 && "@" + nip05?.split("@")[1]) || pubkey_truncated;
+    (nip05 && "@" + nip05?.split("@")[1]) || npub_truncated;
 
   // last_message is a temporarily? a unix timestamp
   const timestamp_string: string = getFormattedMsgRecvTime(last_message);

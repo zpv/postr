@@ -1,8 +1,7 @@
 import { useState } from "react";
-import Scrollbars from "react-custom-scrollbars-2";
+import { toNpub, toPubkeyOrNone } from "../../helpers/pubkey";
 import {
   ConversationsListItem,
-  SingleMessage,
   Profiles,
   SetStringState,
 } from "../../lib/types";
@@ -32,11 +31,9 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
     e.preventDefault();
     // if searchFilter is a valid pubkey (sha256 hexadecimal string), set peer to that pubkey
     // else, set peer to the first pubkey that matches the searchFilter
-    if (
-      searchFilter.length === 64 &&
-      searchFilter.match(/^[0-9A-Fa-f]+$/i) !== null
-    ) {
-      setPeer(searchFilter);
+    const pubkey = toPubkeyOrNone(searchFilter);
+    if (pubkey) {
+      setPeer(pubkey);
     } else {
       for (let i = 0; i < message_list.length; i++) {
         if (!filteredOut(message_list[i])) {
@@ -49,9 +46,11 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
 
   const filteredOut = (msg: ConversationsListItem) => {
     const { name, pubkey, nip05 } = profiles[msg.peer];
+    const npub = toNpub(pubkey);
 
     return (
       !name?.toLowerCase().startsWith(searchFilter.toLowerCase()) &&
+      !npub?.toLowerCase().startsWith(searchFilter.toLowerCase()) &&
       !pubkey?.toLowerCase().startsWith(searchFilter.toLowerCase()) &&
       !nip05?.toLowerCase().startsWith(searchFilter.toLowerCase()) &&
       !(nip05 && "@" + nip05.toLowerCase().split("@")[1])?.startsWith(

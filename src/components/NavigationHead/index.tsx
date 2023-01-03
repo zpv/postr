@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useState } from "react";
+import { toNpub } from "../../helpers/pubkey";
 
 interface NavigationHeadProps {
   picture?: string;
@@ -14,11 +15,12 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
   pubkey,
   name,
 }) => {
+  const npub = toNpub(pubkey);
   const [isHovering, setIsHovering] = useState<boolean>(false);
-  const display_name: string = name || (pubkey && pubkey.slice(0, 6)) || "";
+  const display_name: string = name || (pubkey && npub) || "";
 
   async function copyToClipboard() {
-    await navigator.clipboard.writeText(pubkey);
+    await navigator.clipboard.writeText(npub);
   }
 
   function handleMouseOver() {
@@ -44,7 +46,8 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
             onMouseOut={handleMouseOut}
             onClick={copyToClipboard}
           >
-            {isHovering && ((nip05 && "@" + nip05?.split("@")[1]) || pubkey)}
+            {isHovering &&
+              ((nip05 && "@" + nip05?.split("@")[1]) || toNpub(pubkey))}
             {!isHovering && display_name}
           </h1>
           <Link href="/profile">
