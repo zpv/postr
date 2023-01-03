@@ -5,62 +5,33 @@ use postr::cmd::{
     get_pubkey, get_relays, send_dm, set_privkey, set_relays, set_user_info, sub_to_msg_events,
     unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles,
 };
-use postr::db::{self, SqlitePool};
+use postr::db;
 use postr::event::Event;
 use postr::socket::RelayPool;
 use postr::state::{InnerState, PostrState};
 use postr::{
     __cmd__get_pubkey, __cmd__get_relays, __cmd__send_dm, __cmd__set_privkey, __cmd__set_relays,
     __cmd__set_user_info, __cmd__sub_to_msg_events, __cmd__unsub_from_msg_events,
-    __cmd__user_convos, __cmd__user_dms, __cmd__user_profile, socket, __cmd__user_profiles,
+    __cmd__user_convos, __cmd__user_dms, __cmd__user_profile, __cmd__user_profiles,
 };
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
-use serde::{Deserialize, Serialize};
-use tokio::task;
+use rusqlite::OpenFlags;
+use std::sync::atomic::Ordering;
 
-use std::error::Error;
 use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use std::{env, thread};
+use std::{env};
 
 use std::sync::RwLock;
 use tokio::runtime::Builder;
-use tokio::sync::broadcast::{self, Receiver, Sender};
+use tokio::sync::broadcast;
 use tokio::sync::mpsc;
-use tokio::sync::oneshot;
 use tracing::*;
-use websocket::{ClientBuilder, Message, OwnedMessage};
-
-use tauri::Manager;
-
-use console_subscriber::ConsoleLayer;
 
 #[cfg_attr(
     all(not(debug_assertions), target_os = "windows"),
     windows_subsystem = "windows"
 )]
-// Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-#[tauri::command]
-fn greet(name: &str, pool: tauri::State<SqlitePool>) -> String {
-    if let Ok(conn) = pool.get() {
-        // execute the query. Don't cache, since queries vary so much.
-        // count number of events
-        match conn.query_row::<u32, _, _>("SELECT COUNT(*) FROM event", [], |row| row.get(0)) {
-            Ok(count) => {
-                info!("count: {}", count);
-                count.to_string()
-            }
-            Err(e) => {
-                error!("error: {}", e);
-                "0".to_string()
-            }
-        }
-    } else {
-        "0".to_string()
-    }
-}
 
 pub fn init_app_config_path() {
     let home_dir = tauri::api::path::home_dir();
@@ -73,7 +44,7 @@ pub fn init_app_config_path() {
             fs::create_dir_all(app_config).unwrap();
         }
         None => {
-            info!("no ")
+            info!("No home directory found.")
         }
     }
 
@@ -91,14 +62,19 @@ fn main() {
     // runs connect() in a separate thread
     let rt = Builder::new_multi_thread()
         .enable_all()
-        .thread_name("tokio-ws")
+        .thread_name_fn(|| {
+            // give each thread a unique numeric name
+            static ATOMIC_ID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+            let id = ATOMIC_ID.fetch_add(1,Ordering::SeqCst);
+            format!("tokio-ws-{}", id)
+        })
         // limit concurrent SQLite blocking threads
         .max_blocking_threads(4)
         .on_thread_start(|| {
-            debug!("started new thread");
+            trace!("started new thread: {:?}", std::thread::current().name());
         })
         .on_thread_stop(|| {
-            debug!("stopping thread");
+            trace!("stopped thread: {:?}", std::thread::current().name());
         })
         .build()
         .unwrap();
@@ -153,11 +129,17 @@ fn main() {
 
         let pool = db::build_pool(
             "client query",
-            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+            OpenFlags::SQLITE_OPEN_READ_ONLY,
             4,
             128,
             true,
         );
+
+        // optimize db on startup
+        if let Ok(mut conn) = pool.get() {
+            info!("running database optimizer");
+            db::optimize_db(&mut conn).ok();
+        }
 
         tauri::Builder::default()
             .manage(pool)

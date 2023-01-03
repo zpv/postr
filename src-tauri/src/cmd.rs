@@ -17,11 +17,9 @@ use crate::subscription::Subscription;
 use nostr_rust::events::EventPrepare;
 use nostr_rust::nips::nip4::decrypt;
 use nostr_rust::nips::nip4::encrypt;
-use nostr_rust::nips::nip4::PrivateMessage;
 use nostr_rust::utils::get_timestamp;
 use nostr_rust::Identity;
 use rusqlite::named_params;
-use rusqlite::ToSql;
 use rusqlite::params;
 use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
@@ -80,7 +78,7 @@ pub fn user_profile(
     // get user profile from pubkey
     if let Ok(conn) = db_pool.get() {
         let mut statement = conn
-            .prepare("SELECT * FROM users WHERE pubkey = ? AND is_current")
+            .prepare_cached("SELECT * FROM users WHERE pubkey = ? AND is_current")
             .unwrap();
         let mut users = statement
             .query_map([pubkey], |row| {
@@ -135,7 +133,7 @@ pub fn user_profiles(
 
     if let Ok(conn) = db_pool.get() {
         let mut statement = conn
-            .prepare("SELECT * FROM users WHERE pubkey in rarray(?) AND is_current")
+            .prepare_cached("SELECT * FROM users WHERE pubkey in rarray(?) AND is_current")
             .unwrap();
         let mut users = statement
             .query_map(params![values], |row| {
@@ -213,7 +211,7 @@ pub fn user_convos(
     if let Ok(conn) = db_pool.get() {
         let start = Instant::now();
         let mut statement = conn
-            .prepare(
+            .prepare_cached(
                 r##"
         SELECT 
             CASE 
@@ -343,7 +341,7 @@ pub fn user_dms(
     // debug!("query: {}", q);
 
     if let Ok(conn) = db_pool.get() {
-        let mut statement = conn.prepare(&q).unwrap();
+        let mut statement = conn.prepare_cached(&q).unwrap();
 
         let mut events = statement
             .query_map(rusqlite::params_from_iter(p), |row| {

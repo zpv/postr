@@ -1,7 +1,6 @@
-use crate::error::{Error, Result};
-use crate::event::{self, single_char_tagname, Event};
+use crate::error::Result;
+use crate::event::{single_char_tagname, Event};
 use crate::subscription::{ReqFilter, Subscription};
-use crate::notice::Notice;
 use crate::hexrange::hex_range;
 use crate::hexrange::HexSearch;
 use crate::schema::{upgrade_db, STARTUP_SQL};
@@ -14,13 +13,13 @@ use rusqlite::types::ToSql;
 use rusqlite::OpenFlags;
 use std::collections::HashMap;
 use std::fmt::Write as _;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 
 use tokio::task;
-use tracing::{debug, info, trace, warn};
+use tracing::{debug, info, warn};
 
 pub type SqlitePool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
 pub type PooledConnection = r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>;
@@ -81,7 +80,14 @@ pub fn build_pool(
 
 /// Perform normal maintenance
 pub fn optimize_db(conn: &mut PooledConnection) -> Result<()> {
-    conn.execute_batch("PRAGMA optimize;")?;
+    let start = Instant::now();
+    conn.execute_batch(
+       "PRAGMA journal_mode = WAL;
+        PRAGMA synchronous = normal;
+        PRAGMA temp_store = memory;
+        PRAGMA mmap_size = 30000000000;
+        PRAGMA optimize;")?;
+    info!("optimize ran in {:?}", start.elapsed());
     Ok(())
 }
 
@@ -236,11 +242,13 @@ pub fn write_event(conn: &mut PooledConnection, e: &Event) -> Result<usize> {
     // if this event is replaceable update, hide every other replaceable
     // event with the same kind from the same author that was issued
     // earlier than this.
-    if e.kind == 0 || e.kind == 3 || (e.kind >= 10000 && e.kind < 20000) {
+    if e.kind == 0 || e.kind == 3 || e.kind == 41 || (e.kind >= 10000 && e.kind < 20000) {
+        let author = hex::decode(&e.pubkey).ok();
+        // this is a backwards check - hide any events that were older.
         let update_count = tx.execute(
-					"UPDATE event SET hidden=TRUE WHERE id!=? AND kind=? AND author=? AND created_at <= ? and hidden!=TRUE",
-					params![ev_id, e.kind, hex::decode(&e.pubkey).ok(), e.created_at],
-			)?;
+            "UPDATE event SET hidden=TRUE WHERE hidden!=TRUE and kind=? and author=? and id NOT IN (SELECT id FROM event WHERE kind=? AND author=? ORDER BY created_at DESC LIMIT 1)",
+            params![e.kind, author, e.kind, author],
+        )?;
         if update_count > 0 {
             info!(
                 "hid {} older replaceable kind {} events for author: {:?}",
