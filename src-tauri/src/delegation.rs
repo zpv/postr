@@ -8,7 +8,7 @@ use regex::Regex;
 use secp256k1::{schnorr, Secp256k1, VerifyOnly, XOnlyPublicKey};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use tracing::{debug, info};
+use tracing::info;
 
 // This handles everything related to delegation, in particular the
 // condition/rune parsing and logic.

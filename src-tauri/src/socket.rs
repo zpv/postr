@@ -1,34 +1,19 @@
 extern crate tokio;
 extern crate websocket;
 
-use crate::db;
 use crate::error::{Error, Result};
 use crate::event::Event;
 use crate::event::EventResp;
 use futures_util::{SinkExt, StreamExt};
-use tokio::join;
 use tokio_tungstenite::tungstenite::Message;
 
-use std::collections::{hash_set, HashSet};
-use std::env;
-use std::fs;
-use std::path::Path;
 use std::time::Duration;
 
-use tokio::runtime::Builder;
-use tokio::sync::broadcast::{self, Receiver, Sender};
-use tokio::sync::mpsc;
-use tokio::sync::oneshot;
-use tokio_tungstenite::{
-    connect_async,
-    tungstenite::{Error as TungsteniteError, Result as TungsteniteResult},
-};
+use serde::{Deserialize, Serialize};
+use tokio::sync::broadcast::{self, Sender};
+use tokio_tungstenite::connect_async;
 use tracing::*;
 use url::Url;
-
-use console_subscriber::ConsoleLayer;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 /// Close command in network format
 #[derive(Serialize, Deserialize, PartialEq, Eq, Debug, Clone)]
@@ -188,7 +173,7 @@ impl RelaySocket {
                         info!("Connected to {}", relay);
                         s
                     }
-                    Err(e) => {
+                    Err(_) => {
                         error!("Error connecting to {}", relay);
                         // wait 5 seconds before trying to reconnect
                         tokio::time::sleep(Duration::from_secs(5)).await;
@@ -271,7 +256,7 @@ impl RelaySocket {
                                                         break;
                                                     }
                                                 }
-                                                Err(e) => {
+                                                Err(_) => {
                                                     error!("client sent an invalid event");
                                                 }
                                             }

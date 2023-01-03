@@ -3,10 +3,8 @@ use crate::db::PooledConnection;
 use crate::error::Result;
 use const_format::formatcp;
 use rusqlite::limits::Limit;
-use rusqlite::params;
 use rusqlite::Connection;
 use std::cmp::Ordering;
-use std::time::Instant;
 use tracing::{debug, error, info};
 
 /// Startup DB Pragmas
