@@ -24,22 +24,23 @@ const MessageHead: React.FC<MessageHeadProps> = ({
 
   return (
     <>
-      <div className="bg-neutral-800 flex flex-row border-b border-neutral-800">
+      <div className="flex flex-row border-b border-neutral-800 bg-neutral-800">
         <div
-          className="cursor-pointer flex flex-row hover:ripple-bg-neutral-700 group"
-          onClick={copyToClipboard}>
+          className="group flex cursor-pointer flex-row hover:ripple-bg-neutral-700"
+          onClick={copyToClipboard}
+        >
           <img
             src={picture || `https://robohash.org/${peer}.png`}
             alt="profile"
-            className="rounded-lg w-10 h-10 m-3 border border-white border-opacity-20"
+            className="m-3 h-10 w-10 rounded-lg border border-white border-opacity-20"
           />
-          <div className="text-neutral-200 truncate overflow-hidden w-64 my-auto">
-            <h1 className="text-gray-400 truncate hidden group-hover:inline">
+          <div className="my-auto w-64 overflow-hidden truncate text-neutral-200">
+            <h1 className="hidden truncate text-gray-400 group-hover:inline">
               {hover_text}
             </h1>
 
             <div className="group-hover:hidden">
-              <h1 className="text-neutral-200 truncate leading-none">
+              <h1 className="truncate leading-none text-neutral-200">
                 {display_name}
               </h1>
 
@@ -47,7 +48,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
                 <div className="flex flex-row">
                   <img
                     src={verifIcon.src}
-                    className="h-3 w-3 my-auto opacity-20 mr-1 leading-none"
+                    className="my-auto mr-1 h-3 w-3 leading-none opacity-20"
                   />
                   <div className="flex items-center">
                     <span className="text-gray-400" style={{ height: 21 }}>
@@ -59,13 +60,9 @@ const MessageHead: React.FC<MessageHeadProps> = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-row w-full justify-end">
-          <div className="my-auto p-2 mx-3 cursor-pointer hover:ripple-bg-neutral-700 rounded-lg opacity-50">
-            <img
-              src={info?.src || ""}
-              alt="info"
-              className="w-5 h-5"
-            />
+        <div className="flex w-full flex-row justify-end">
+          <div className="my-auto mx-3 cursor-pointer rounded-lg p-2 opacity-50 hover:ripple-bg-neutral-700">
+            <img src={info?.src || ""} alt="info" className="h-5 w-5" />
           </div>
         </div>
       </div>

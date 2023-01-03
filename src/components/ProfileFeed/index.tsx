@@ -13,7 +13,9 @@ const ProfileFeed = () => {
   return (
     <>
       {events.map((event) => (
-        <p key={event.id}>{event.pubkey} posted: {event.content}</p>
+        <p key={event.id}>
+          {event.pubkey} posted: {event.content}
+        </p>
       ))}
     </>
   );

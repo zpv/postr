@@ -44,18 +44,18 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
 
   return (
     <>
-      <div className="justify-center items-center overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-        <div className="relative w-2/3 my-10 mx-auto max-w-3xl">
+      <div className="fixed inset-0 z-50 items-center justify-center overflow-y-auto overflow-x-hidden outline-none focus:outline-none">
+        <div className="relative my-10 mx-auto w-2/3 max-w-3xl">
           {/*content*/}
-          <div className="border-0 rounded-lg shadow-lg relative w-full bg-neutral-800 outline-none focus:outline-none">
+          <div className="relative w-full rounded-lg border-0 bg-neutral-800 shadow-lg outline-none focus:outline-none">
             {/*header*/}
-            <div className="flex items-start justify-between p-5 border-b border-solid border-neutral-700 rounded-t">
+            <div className="flex items-start justify-between rounded-t border-b border-solid border-neutral-700 p-5">
               <h3 className="text-3xl font-semibold">Configure Relays</h3>
               <img
                 className={
-                  "ml-3 mr-auto w-7 opacity-40 border p-1 border-neutral-700 rounded-sm cursor-pointer " +
+                  "ml-3 mr-auto w-7 cursor-pointer rounded-sm border border-neutral-700 p-1 opacity-40 " +
                   (viewRaw
-                    ? "bg-neutral-900 border-neutral-600"
+                    ? "border-neutral-600 bg-neutral-900"
                     : "opacity-100")
                 }
                 src={icon.src}
@@ -70,11 +70,13 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
                     setRelays(newRelays);
                   }
                   setViewRaw(!viewRaw);
-                }}></img>
+                }}
+              ></img>
               <button
-                className="p-1 ml-auto bg-transparent border-0 text-black opacity-30 float-right text-3xl leading-none font-semibold "
-                onClick={() => setShowConfigRelaysModal(false)}>
-                <span className="bg-transparent text-white h-6 w-6 text-2xl block">
+                className="float-right ml-auto border-0 bg-transparent p-1 text-3xl font-semibold leading-none text-black opacity-30 "
+                onClick={() => setShowConfigRelaysModal(false)}
+              >
+                <span className="block h-6 w-6 bg-transparent text-2xl text-white">
                   ×
                 </span>
               </button>
@@ -84,7 +86,7 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
               {viewRaw ? (
                 <div className="relative p-6">
                   <textarea
-                    className="border border-neutral-700 w-full bg-opacity-0 bg-neutral-700 px-3 py-1 text-gray-200 h-64 focus:placeholder-transparent"
+                    className="h-64 w-full border border-neutral-700 bg-neutral-700 bg-opacity-0 px-3 py-1 text-gray-200 outline-none focus:placeholder-transparent"
                     placeholder="Enter relays, one per line or comma separated..."
                     defaultValue={relays.join(",\n")}
                     autoFocus={true}
@@ -95,18 +97,20 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
                 <RelaysList {...{ relays, setRelays, inputRef }} />
               )}
               {/*footer*/}
-              <div className="flex items-center justify-end p-2 border-t border-solid border-neutral-700 rounded-b">
+              <div className="flex items-center justify-end rounded-b border-t border-solid border-neutral-700 p-2">
                 <button
-                  className="text-gray-200 active:text-gray-500 font-medium px-3 pt-1 outline-none focus:outline-none mr-1 mb-1"
+                  className="mr-1 mb-1 px-3 pt-1 font-medium text-gray-200 outline-none focus:outline-none active:text-gray-500"
                   type="button"
-                  onClick={() => setShowConfigRelaysModal(false)}>
+                  onClick={() => setShowConfigRelaysModal(false)}
+                >
                   Cancel
                 </button>
                 <button
-                  className="bg-indigo-800 text-white hover:bg-opacity-70 active:bg-opacity-40 font-medium px-3 py-1 rounded-sm"
+                  className="rounded-sm bg-indigo-800 px-3 py-1 font-medium text-white hover:bg-opacity-70 active:bg-opacity-40"
                   type="button"
                   onClick={handleConfigRelays}
-                  key="config-relays-button">
+                  key="config-relays-button"
+                >
                   Save
                 </button>
               </div>
@@ -114,7 +118,7 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
           </div>
         </div>
       </div>
-      <div className="opacity-25 fixed inset-0 z-40 bg-black"></div>
+      <div className="fixed inset-0 z-40 bg-black opacity-25"></div>
     </>
   );
 };

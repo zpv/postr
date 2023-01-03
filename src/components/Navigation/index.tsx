@@ -27,7 +27,7 @@ const Navigation: React.FC<NavigationProps> = ({ user_profile, tab }) => {
 
   return (
     <>
-      <div className="bg-black border-neutral-600 border-r h-[100vh]">
+      <div className="h-[100vh] border-r border-neutral-600 bg-black">
         <NavigationHead {...user_profile} />
         {buttons.map((button) => (
           <NavigationButton {...button} {...{ tab }} key={button.id} />

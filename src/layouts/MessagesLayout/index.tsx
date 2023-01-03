@@ -120,8 +120,12 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
           const new_conversation: SingleMessage[] = [...prev];
 
           // to save time, check if should be pushed immediately
-          if (new_conversation.length === 0 || new_conversation[new_conversation.length - 1].timestamp < event.payload.timestamp) {
-            new_conversation.push(event.payload); 
+          if (
+            new_conversation.length === 0 ||
+            new_conversation[new_conversation.length - 1].timestamp <
+              event.payload.timestamp
+          ) {
+            new_conversation.push(event.payload);
             return new_conversation;
           }
 

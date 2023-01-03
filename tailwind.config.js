@@ -13,6 +13,7 @@ module.exports = {
     }),
   },
   plugins: [
-    require('tailwindcss-ripple')()
+    require('tailwindcss-ripple')(),
+    require('prettier-plugin-tailwindcss')
   ],
 };

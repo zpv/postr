@@ -30,7 +30,7 @@ function Feed({ user_profile }) {
   );
 
   return (
-    <div className="bg-neutral-900 w-full h-full overflow-hidden">
+    <div className="h-full w-full overflow-hidden bg-neutral-900">
       <div className="flex h-full">
         <Layout {...{ user_profile }} {...{ tab }}>
           {pageBody}

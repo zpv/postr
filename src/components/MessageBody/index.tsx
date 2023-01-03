@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { getFormattedTimeStr } from "../../helpers/timeHelpers";
 import { SetMessagesState, SingleMessage } from "../../lib/types";
 import MessageBodyItem from "../MessageBodyItem";
+// import { Scrollbars } from "react-custom-scrollbars-2";
 
 interface MessageBodyProps {
   user: string; // The user's public key
@@ -167,7 +168,7 @@ const MessageBody: React.FC<MessageBodyProps> = ({
       return (
         <>
           {insertTimestamp && (
-            <div className="text-center text-neutral-400 text-xs">
+            <div className="text-center text-xs text-neutral-400">
               {timeStr}
             </div>
           )}
@@ -180,11 +181,11 @@ const MessageBody: React.FC<MessageBodyProps> = ({
 
   return (
     <>
-      <div
-        ref={messageRef}
-        className="py-5 w-full overflow-y-auto overflow-x-hidden h-full">
+      {/* <Scrollbars autoHide autoHideTimeout={1000} autoHideDuration={200}> */}
+      <div ref={messageRef} className="h-full w-full overflow-y-auto py-5">
         {messageBody}
       </div>
+      {/* </Scrollbars> */}
     </>
   );
 };

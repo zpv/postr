@@ -31,23 +31,24 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
 
   return (
     <>
-      <div className="flex flex-row p-4 border-b border-neutral-600">
+      <div className="flex flex-row border-b border-neutral-600 p-4">
         <img
           src={picture || `https://robohash.org/${pubkey}.png`}
-          className="rounded-lg h-12 border border-opacity-20 border-white bg-neutral-900"
+          className="h-12 rounded-lg border border-white border-opacity-20 bg-neutral-900"
         />
-        <div className="grid grid-rows-2 text-start items-center">
+        <div className="grid grid-rows-2 items-center text-start">
           {/* <h1 className="text-xl mx-2 truncate overflow-hidden">{display_name ? display_name : "no name"}</h1> */}
           <h1
-            className="text-xl rounded-lg mx-1 px-1 truncate overflow-hidden hover:ripple-bg-neutral-800 cursor-pointer"
+            className="mx-1 cursor-pointer overflow-hidden truncate rounded-lg px-1 text-xl hover:ripple-bg-neutral-800"
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
-            onClick={copyToClipboard}>
+            onClick={copyToClipboard}
+          >
             {isHovering && ((nip05 && "@" + nip05?.split("@")[1]) || pubkey)}
             {!isHovering && display_name}
           </h1>
           <Link href="/profile">
-            <h2 className="mx-2 text-neutral-600 cursor-pointer hover:underline">
+            <h2 className="mx-2 cursor-pointer text-neutral-600 hover:underline">
               Edit profile
             </h2>
           </Link>

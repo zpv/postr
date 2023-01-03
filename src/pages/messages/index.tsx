@@ -46,8 +46,8 @@ function Messages({
   }
 
   return (
-    <div className="bg-neutral-900 w-full h-full overflow-hidden">
-      <div className="grid grid-cols-[180px_240px_1fr] h-full">
+    <div className="h-full w-full overflow-hidden bg-neutral-900">
+      <div className="grid h-full grid-cols-[180px_240px_1fr]">
         <Layout {...{ user_profile }} {...{ tab }}>
           <MessagesLayout
             {...{

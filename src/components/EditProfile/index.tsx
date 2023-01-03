@@ -14,7 +14,7 @@ import {
 import ConfigRelaysModal from "../ConfigRelaysModal";
 
 const style =
-  " text-neutral-500 focus:text-white bg-neutral-700 bg-opacity-20 rounded-sm px-2 py-1 w-full";
+  " text-neutral-400 focus:text-white bg-neutral-700 bg-opacity-20 rounded-sm px-2 py-1 w-full outline-none";
 
 interface EditProfileProps {
   user_profile: Profile;
@@ -189,9 +189,10 @@ const EditProfile: React.FC<EditProfileProps> = ({
         onSubmit={(e) => {
           e.preventDefault();
           handleEditProfile(e);
-        }}>
-        <div className="grid grid-cols-2 gap-1 max-h-full pb-5 mb-4 border-b border-neutral-800">
-          <div className="bg-neutral-800 pt-3 pb-5 px-4 rounded-tl-3xl rounded-bl-3xl bg-opacity-50">
+        }}
+      >
+        <div className="mb-4 grid max-h-full grid-cols-2 gap-1 border-b border-neutral-800 pb-5">
+          <div className="rounded-tl-3xl rounded-bl-3xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Display name:</h2>
             <input
               type="text"
@@ -200,7 +201,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
             />
             <h2 className="mt-5">About:</h2>
             <textarea
-              className={"resize-none h-[131px]" + style}
+              className={"h-[131px] resize-none" + style}
               defaultValue={user_profile?.about || ""}
             />
             <h2 className="mt-[13px]">NIP-05 domain:</h2>
@@ -210,9 +211,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
               defaultValue={user_profile?.nip05 || ""}
             />
           </div>
-          <div className="bg-neutral-800 pt-3 pb-5 px-4 rounded-tr-3xl rounded-br-3xl bg-opacity-50">
+          <div className="rounded-tr-3xl rounded-br-3xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Image:</h2>
-            <div className="bg-neutral-900 h-52 w-52 border-2 rounded-xl border-neutral-800">
+            <div className="h-52 w-52 rounded-xl border-2 border-neutral-800 bg-neutral-900">
               <img
                 src={
                   user_profile?.picture ||
@@ -229,24 +230,27 @@ const EditProfile: React.FC<EditProfileProps> = ({
               defaultValue={user_profile?.picture || ""}
             />
           </div>
-          <div className="flex items-center col-span-2  ">
+          <div className="col-span-2 flex items-center  ">
             {/* {isProfileLoaded && ( */}
             <button
               type="submit"
-              className={"rounded-sm px-3 py-1 mr-2 font-medium my-2 w-min " + 
+              className={
+                "my-2 mr-2 w-min rounded-sm px-3 py-1 font-medium " +
                 (changesMade
                   ? "bg-indigo-800 text-white hover:bg-opacity-70 active:bg-opacity-40"
-                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed")
+                  : "cursor-not-allowed bg-neutral-800 text-neutral-500")
               }
-              disabled={!changesMade}>
+              disabled={!changesMade}
+            >
               Save
             </button>
             {/* )} */}
             {!isProfileLoaded && (
               <button
                 type="button"
-                className="bg-neutral-900 border border-red-500 rounded-sm px-3 py-1 font-medium text-white my-2 hover:bg-red-500 transition duration-150 w-min"
-                onClick={handleRefresh}>
+                className="my-2 w-min rounded-sm border border-red-500 bg-neutral-900 px-3 py-1 font-medium text-white transition duration-150 hover:bg-red-500"
+                onClick={handleRefresh}
+              >
                 Retry
               </button>
             )}
@@ -258,7 +262,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
         <h1 className="text-2xl">Account</h1>
 
         <div>
-          <div className="bg-neutral-800 pt-3 pb-5 px-4 rounded-3xl bg-opacity-50">
+          <div className="rounded-3xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Public key:</h2>
             <div className="flex items-center">
               <input
@@ -269,22 +273,25 @@ const EditProfile: React.FC<EditProfileProps> = ({
               />
               <button
                 onClick={copyToClipboard}
-                className="bg-neutral-800 rounded-sm px-3 py-1 ml-1 font-medium text-white hover:bg-indigo-800 transition duration-100 active:bg-opacity-70">
+                className="ml-1 rounded-sm bg-neutral-800 px-3 py-1 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
+              >
                 Copy
               </button>
             </div>
           </div>
-          <div className="flex items-center my-2">
+          <div className="my-2 flex items-center">
             <button
-              className="bg-indigo-800 font-medium hover:bg-opacity-70 border border-opacity-0 border-indigo-800 rounded-sm px-3 py-1 text-white mb-3 active:bg-opacity-40"
+              className="mb-3 rounded-sm border border-indigo-800 border-opacity-0 bg-indigo-800 px-3 py-1 font-medium text-white hover:bg-opacity-70 active:bg-opacity-40"
               onClick={() => setShowPrivKeyModal(true)}
-              type="button">
+              type="button"
+            >
               Import private key
             </button>
             <button
-              className="bg-neutral-900 font-medium rounded-sm mx-2 px-3 py-1 border border-indigo-800 text-white mb-3 transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
+              className="mx-2 mb-3 rounded-sm border border-indigo-800 bg-neutral-900 px-3 py-1 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
               onClick={() => setShowConfigRelaysModal(true)}
-              type="button">
+              type="button"
+            >
               Configure relays
             </button>
           </div>

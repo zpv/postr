@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { ConversationsListItem, SingleMessage, Profiles, SetStringState } from "../../lib/types";
+import Scrollbars from "react-custom-scrollbars-2";
+import {
+  ConversationsListItem,
+  SingleMessage,
+  Profiles,
+  SetStringState,
+} from "../../lib/types";
 import MessagesNavListItem from "../MessagesNavListItem";
 
 interface MessagesNavListProps {
@@ -59,18 +65,20 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
       <div className="p-3">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-row items-center justify-between">
+          className="flex flex-row items-center justify-between"
+        >
           <input
             type="text"
             placeholder="Search... (nip05, pubkey, name)"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            className="rounded-sm w-full bg-neutral-800 px-2 focus:placeholder-transparent border border-neutral-700"
+            className="w-full rounded-sm border border-neutral-700 bg-neutral-800 px-2 outline-none focus:placeholder-transparent"
           />
         </form>
       </div>
 
-      <div className="overflow-y-auto h-full">
+      {/* <Scrollbars> */}
+      <div className="h-full overflow-y-auto overflow-x-hidden">
         {message_list.map((msg: ConversationsListItem) => {
           console.log(msg);
           if (searchFilter !== "") {
@@ -82,17 +90,19 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
             <div
               onClick={() => handleClick(msg.peer)}
               className={
-                "p-3 flex flex-row border-indigo-600 cursor-pointer transition duration-100 " +
+                "flex cursor-pointer flex-row border-indigo-600 p-3 transition duration-100 " +
                 (peer && msg.peer === peer
-                  ? "bg-neutral-900 border-r-2"
+                  ? "border-r-2 bg-neutral-900"
                   : "hover:bg-neutral-900")
               }
-              key={itemId++}>
+              key={itemId++}
+            >
               <MessagesNavListItem {...profiles[msg.peer]} {...msg} />
             </div>
           );
         })}
       </div>
+      {/* </Scrollbars> */}
     </>
   );
 };

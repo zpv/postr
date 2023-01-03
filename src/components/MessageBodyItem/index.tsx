@@ -35,21 +35,23 @@ const MessageBodyItem: React.FC<MessageBodyItemProps> = ({
   return (
     <>
       <div
-        className={"group w-full flex " + (author === user && "justify-end")}>
+        className={"group flex w-full " + (author === user && "justify-end")}
+      >
         {isUser && (
-          <div className="group-hover:inline hidden text-center text-neutral-400 text-xs my-auto">
+          <div className="my-auto hidden text-center text-xs text-neutral-400 group-hover:inline">
             {timeStr}
           </div>
         )}
         <p
           className={
-            "my-[0.5px] mx-5 py-1 px-4 break-all max-w-xs lg:max-w-lg rounded-sm " +
+            "my-[0.5px] mx-5 max-w-xs break-all rounded-sm py-1 px-4 lg:max-w-lg " +
             (isUser ? userStyling : authorStyling)
-          }>
+          }
+        >
           {content}
         </p>
         {!isUser && (
-          <div className="group-hover:inline hidden text-center text-neutral-400 text-xs my-auto">
+          <div className="my-auto hidden text-center text-xs text-neutral-400 group-hover:inline">
             {timeStr}
           </div>
         )}

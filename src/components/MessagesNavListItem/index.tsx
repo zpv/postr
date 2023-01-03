@@ -29,31 +29,30 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
     <>
       <img
         src={picture || `https://robohash.org/${peer}.png`}
-        className="rounded-lg h-12 mr-2 border-white border border-opacity-20 bg-neutral-900"
+        className="mr-2 h-12 rounded-lg border border-white border-opacity-20 bg-neutral-900"
       />
-      <div className="grid grid-rows-2 w-full">
+      <div className="grid w-full grid-rows-2">
         <div
           style={{ gridTemplateRows: "1fr" }}
-          className={"flex flex-row group w-[160px]"}>
+          className={"group flex w-[160px] flex-row"}
+        >
           {/* if mouse hovers over -> show */}
-          <h1 className="text-gray-400 truncate hidden group-hover:inline">
+          <h1 className="hidden truncate text-gray-400 group-hover:inline">
             {hover_text}
           </h1>
 
           {/* if mouse hovers over -> hide */}
-          <h1 className="group-hover:hidden truncate overflow-ellipsis">
+          <h1 className="truncate overflow-ellipsis group-hover:hidden">
             {display}
           </h1>
           {nip05 && (
             <img
               src={verifIcon.src}
-              className="group-hover:hidden h-3 w-3 my-auto opacity-20 ml-1"
+              className="my-auto ml-1 h-3 w-3 opacity-20 group-hover:hidden"
             />
           )}
         </div>
-        <p className="text-neutral-500 truncate overflow-hidden text-xs">
-          {timestamp_string}
-        </p>
+        <p className="truncate text-xs text-neutral-500">{timestamp_string}</p>
       </div>
     </>
   );

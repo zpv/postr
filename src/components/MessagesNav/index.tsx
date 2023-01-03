@@ -1,4 +1,8 @@
-import { ConversationsListItem, Profiles, SetStringState } from "../../lib/types";
+import {
+  ConversationsListItem,
+  Profiles,
+  SetStringState,
+} from "../../lib/types";
 import MessagesNavHead from "../MessagesNavHead";
 import MessagesNavList from "../MessagesNavList";
 
@@ -19,7 +23,8 @@ const MessagesNav: React.FC<MessagesNavProps> = ({
     <>
       <div
         style={{ gridTemplateRows: "min-content min-content 1fr" }}
-        className="grid h-[100vh] bg-black border-neutral-600 border-r">
+        className="grid h-[100vh] border-r border-neutral-600 bg-black"
+      >
         <MessagesNavHead />
         <MessagesNavList {...{ message_list, peer, profiles, setPeer }} />
       </div>

@@ -28,24 +28,26 @@ const MessageCompose: React.FC<MessageComposeProps> = ({
 
   return (
     <>
-      <div className="w-full px-2 py-3 border-neutral-600 border-t">
+      <div className="w-full border-t border-neutral-600 px-2 py-3">
         <form
           onSubmit={handleSubmit}
-          className="flex flex-row items-center justify-between">
+          className="flex flex-row items-center justify-between"
+        >
           <input
             type="text"
             name="message"
             value={message}
             onChange={handleChange}
             placeholder="Type a message..."
-            className="rounded-tl-full rounded-bl-full w-full bg-neutral-900 border border-neutral-600 py-1 px-3 focus:placeholder-transparent"
+            className="w-full rounded-tl-full rounded-bl-full border border-neutral-600 bg-neutral-900 py-1 px-3 outline-none focus:placeholder-transparent"
           />
           <button
             type="submit"
             className={
-              "border mx-1 px-3 py-1 h-full transition duration-200 " +
+              "mx-1 h-full border px-3 py-1 transition duration-200 " +
               active_style
-            }>
+            }
+          >
             Send
           </button>
         </form>
