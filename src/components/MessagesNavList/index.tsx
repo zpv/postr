@@ -68,7 +68,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
         >
           <input
             type="text"
-            placeholder="Search... (nip05, pubkey, name)"
+            placeholder="Search... (nip05, npub, name)"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             className="w-full rounded-sm border border-neutral-700 bg-neutral-800 px-2 outline-none focus:placeholder-transparent"
@@ -79,7 +79,6 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
       {/* <Scrollbars> */}
       <div className="h-full overflow-y-auto overflow-x-hidden">
         {message_list.map((msg: ConversationsListItem) => {
-          console.log(msg);
           if (searchFilter !== "") {
             if (filteredOut(msg)) {
               return <></>;

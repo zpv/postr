@@ -19,9 +19,9 @@ const MessageBody: React.FC<MessageBodyProps> = ({
   setConversation,
 }) => {
   const messageRef = useRef();
-  const [isFirstLoad, setFirstLoad] = useState(true);
-  const [current_scroll, setCurrentScroll] = useState(0);
-  const [loadedMore, setLoadedMore] = useState(false);
+  const [isFirstLoad, setFirstLoad] = useState<boolean>(true);
+  const [current_scroll, setCurrentScroll] = useState<number>(0);
+  const [loadedMore, setLoadedMore] = useState<boolean>(false);
 
   // useEffect(() => {
   //   // Set up a timer to check for new messages every 5 seconds
@@ -166,7 +166,7 @@ const MessageBody: React.FC<MessageBodyProps> = ({
       rounded_top = rounded_bottom;
 
       return (
-        <>
+        <span key={message_content.id}>
           {insertTimestamp && (
             <div className="text-center text-xs text-neutral-400">
               {timeStr}
@@ -174,7 +174,7 @@ const MessageBody: React.FC<MessageBodyProps> = ({
           )}
           {messageBodyItem}
           {insertSpacer && <div className="h-2"></div>}
-        </>
+        </span>
       );
     }
   );

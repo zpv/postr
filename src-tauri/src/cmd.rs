@@ -270,6 +270,7 @@ pub fn get_pubkey(state: tauri::State<'_, PostrState>) -> Result<String, String>
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PrivateMessageWithRecipient {
+    pub id: String,
     pub author: String,
     pub content: String,
     pub timestamp: u64,
@@ -348,6 +349,7 @@ pub fn user_dms(
                 let msg: String = row.get(0)?;
                 let event: Event = serde_json::from_str(&msg).unwrap();
                 let created_at: i64 = row.get(1)?;
+                
 
                 let decrypted_message =
                     match decrypt(&identity.secret_key, &x_pub_key, &event.content) {
@@ -369,6 +371,7 @@ pub fn user_dms(
                 };
 
                 let private_message = PrivateMessageWithRecipient {
+                    id: event.id.clone(),
                     author: event.pubkey,
                     content: decrypted_message,
                     recipient,
@@ -474,6 +477,7 @@ pub async fn sub_to_msg_events(
             };
 
             let private_message = PrivateMessageWithRecipient {
+                id: event.id.clone(),
                 author: event.pubkey.clone(),
                 content: decrypted_message,
                 recipient,
