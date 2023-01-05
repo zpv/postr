@@ -14,6 +14,7 @@ export type Profiles = {
 };
 
 export type SingleMessage = {
+  id: string;
   author: string;
   recipient: string;
   content: string;

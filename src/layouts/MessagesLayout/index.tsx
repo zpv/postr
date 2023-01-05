@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 
 import { useEffect, useState } from "react";
 import Message from "../../components/Message";
+import MessageInfoView from "../../components/MessageInfoView";
 
 import MessagesNav from "../../components/MessagesNav";
 import {
@@ -44,6 +45,7 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
   const [conversation, setConversation] = useState<SingleMessage[]>([]);
   const [onSubmit, setOnSubmit] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showUserInfo, setShowUserInfo] = useState<boolean>(false);
 
   const getMessages: () => Promise<ConversationsListItem[]> = async () => {
     if (Date.now() - lastRefresh < 30_000) {
@@ -223,15 +225,16 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
       });
     });
 
-    refreshMessages();
-
     return () => {
       unlisten.then((f) => f());
     };
   }, [peer]);
 
   useEffect(() => {
+    refreshMessages();
+
     if (peer !== "") {
+      setShowUserInfo(false);
       setLoading(true);
       (async () => {
         if (!profiles[peer] || profiles[peer].failed) {
@@ -278,6 +281,15 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
     }
   }, [onSubmit]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Date.now() - lastRefresh > 30_000) {
+        refreshMessages();
+      }
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
       <MessagesNav
@@ -288,19 +300,24 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
           setPeer,
         }}
       />
-      <Message
-        {...{
-          user,
-          peer_profile: profiles[peer],
-          peer,
-          conversation,
-          loading,
-          message,
-          setMessage,
-          setOnSubmit,
-          setConversation,
-        }}
-      />
+      {showUserInfo ? (
+        <MessageInfoView {...profiles[peer]} {...{ setShowUserInfo, peer }} />
+      ) : (
+        <Message
+          {...{
+            user,
+            peer_profile: profiles[peer],
+            peer,
+            conversation,
+            loading,
+            message,
+            setMessage,
+            setOnSubmit,
+            setConversation,
+            setShowUserInfo,
+          }}
+        />
+      )}
     </>
   );
 };

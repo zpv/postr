@@ -1,5 +1,6 @@
 import info from "../../assets/info.png";
 import verifIcon from "../../assets/verif.png";
+import { SetBooleanState } from "../../lib/types";
 import { toNpub } from "../../helpers/pubkey";
 
 interface MessageHeadProps {
@@ -7,6 +8,7 @@ interface MessageHeadProps {
   picture?: string;
   nip05?: string;
   peer: string;
+  setShowUserInfo: SetBooleanState;
 }
 
 const MessageHead: React.FC<MessageHeadProps> = ({
@@ -14,6 +16,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
   picture,
   nip05,
   peer,
+  setShowUserInfo,
 }) => {
   const npub = toNpub(peer);
   const npub_truncated: string =
@@ -27,9 +30,9 @@ const MessageHead: React.FC<MessageHeadProps> = ({
 
   return (
     <>
-      <div className="flex min-w-0 flex-row  border-b border-neutral-800 bg-neutral-800">
+      <div className="flex min-w-0 flex-row  border-b border-neutral-700 bg-neutral-800">
         <div
-          className="group flex min-w-0 flex-1 cursor-pointer flex-row hover:ripple-bg-neutral-700"
+          className="group flex min-w-0 flex-1 cursor-pointer flex-row hover:ripple-bg-neutral-700 mr-3"
           onClick={copyToClipboard}
         >
           <img
@@ -63,7 +66,10 @@ const MessageHead: React.FC<MessageHeadProps> = ({
             </div>
           </div>
         </div>
-        <div className="my-auto mx-3 ml-auto cursor-pointer rounded-lg p-2 opacity-50 hover:ripple-bg-neutral-700">
+        <div
+          className="my-auto mr-3 ml-auto cursor-pointer rounded-lg p-2 opacity-50 hover:bg-neutral-700 transition duration-100 active:opacity-20"
+          onClick={() => setShowUserInfo(true)}
+        >
           <img src={info?.src || ""} alt="info" className="h-5 w-5" />
         </div>
       </div>

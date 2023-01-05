@@ -22,6 +22,7 @@ interface MessageProps {
   setMessage: SetStringState;
   setOnSubmit: SetBooleanState;
   setConversation: SetMessagesState;
+  setShowUserInfo: SetBooleanState;
 }
 
 const Message: React.FC<MessageProps> = ({
@@ -34,14 +35,16 @@ const Message: React.FC<MessageProps> = ({
   setMessage,
   setOnSubmit,
   setConversation,
+  setShowUserInfo,
 }) => {
+  const [showModal, setShowModal] = useState<boolean>(false);
   const messageBody = (
     <>
       <div
         style={{ gridTemplateRows: "min-content 1fr min-content" }}
         className="grid h-[100vh] w-full"
       >
-        <MessageHead {...peer_profile} {...{ peer }} />
+        <MessageHead {...peer_profile} {...{ peer, setShowUserInfo }} />
         {!loading && (
           <MessageBody {...{ conversation, user, setConversation, peer }} />
         )}

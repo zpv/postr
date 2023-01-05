@@ -30,7 +30,7 @@ const EditProfileLayout: React.FC<EditProfileLayoutProps> = ({
   setListenFunc,
 }) => {
   return (
-    <div className="max-h-[100vh] overflow-y-scroll px-3 pt-3">
+    <div className="max-h-[100vh] overflow-y-scroll px-6 pt-3">
       <EditProfile
         {...{
           user_profile,

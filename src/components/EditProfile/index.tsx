@@ -141,7 +141,6 @@ const EditProfile: React.FC<EditProfileProps> = ({
     invoke("set_user_info", { ...data }).then((res) => {
       setProfiles((prev: Profiles) => {
         prev[user_profile?.pubkey] = { ...user_profile, ...data };
-        console.log(prev[user_profile?.pubkey]);
         return prev;
       });
       router.push("/profile");
@@ -192,7 +191,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
         }}
       >
         <div className="mb-4 grid max-h-full grid-cols-2 gap-1 border-b border-neutral-800 pb-5">
-          <div className="rounded-tl-3xl rounded-bl-3xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
+          <div className="rounded-tl-xl rounded-bl-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Display name:</h2>
             <input
               type="text"
@@ -211,7 +210,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
               defaultValue={user_profile?.nip05 || ""}
             />
           </div>
-          <div className="rounded-tr-3xl rounded-br-3xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
+          <div className="rounded-tr-xl rounded-br-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Image:</h2>
             <div className="h-52 w-52 rounded-xl border-2 border-neutral-800 bg-neutral-900">
               <img
@@ -230,31 +229,27 @@ const EditProfile: React.FC<EditProfileProps> = ({
               defaultValue={user_profile?.picture || ""}
             />
           </div>
-          <div className="col-span-2 flex items-center  ">
-            {/* {isProfileLoaded && ( */}
-            <button
-              type="submit"
-              className={
-                "my-2 mr-2 w-min rounded-sm px-3 py-1 font-medium " +
-                (changesMade
-                  ? "bg-indigo-800 text-white hover:bg-opacity-70 active:bg-opacity-40"
-                  : "cursor-not-allowed bg-neutral-800 text-neutral-500")
-              }
-              disabled={!changesMade}
-            >
-              Save
-            </button>
-            {/* )} */}
+          <div className="col-span-2 flex items-center">
             {!isProfileLoaded && (
               <button
                 type="button"
-                className="my-2 w-min rounded-sm border border-red-500 bg-neutral-900 px-3 py-1 font-medium text-white transition duration-150 hover:bg-red-500"
+                className="my-2 w-min rounded-sm border border-red-500 bg-neutral-900 px-4 py-2 font-medium text-white transition duration-150 hover:bg-red-500"
                 onClick={handleRefresh}
               >
                 Retry
               </button>
             )}
             <p className="mx-3" ref={msgRef}></p>
+            <button
+              type="submit"
+              className={"rounded-sm px-4 py-2 font-medium my-2 w-min ml-auto " + 
+                (changesMade
+                  ? "bg-indigo-800 text-white hover:bg-opacity-70 active:bg-opacity-40"
+                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed")
+              }
+              disabled={!changesMade}>
+              Save
+            </button>
           </div>
         </div>
       </form>
@@ -262,7 +257,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
         <h1 className="text-2xl">Account</h1>
 
         <div>
-          <div className="rounded-3xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
+          <div className="rounded-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Public key:</h2>
             <div className="flex items-center">
               <input
@@ -281,14 +276,14 @@ const EditProfile: React.FC<EditProfileProps> = ({
           </div>
           <div className="my-2 flex items-center">
             <button
-              className="mb-3 rounded-sm border border-indigo-800 border-opacity-0 bg-indigo-800 px-3 py-1 font-medium text-white hover:bg-opacity-70 active:bg-opacity-40"
+              className="mb-3 rounded-sm border border-indigo-800 border-opacity-0 bg-indigo-800 px-4 py-2  font-medium text-white hover:bg-opacity-70 active:bg-opacity-40"
               onClick={() => setShowPrivKeyModal(true)}
               type="button"
             >
               Import private key
             </button>
             <button
-              className="mx-2 mb-3 rounded-sm border border-indigo-800 bg-neutral-900 px-3 py-1 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
+              className="mx-2 mb-3 rounded-sm border border-indigo-800 bg-neutral-900 px-4 py-2 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
               onClick={() => setShowConfigRelaysModal(true)}
               type="button"
             >
