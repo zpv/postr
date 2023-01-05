@@ -37,7 +37,7 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
       <div className="min-w-0 bg-neutral-900">
         <div className="flex flex-row border-b border-neutral-700 bg-neutral-800">
           <div className="flex h-[64px] w-full">
-            <h1 className="my-auto ml-6 pt-2 text-4xl leading-none">
+            <h1 className="my-auto ml-6 truncate pt-2 text-4xl leading-none">
               User Details
             </h1>
             <div
@@ -51,23 +51,21 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
       </div>
 
       <div className="min-w-0 overflow-y-auto bg-neutral-900">
-        <div
-          className={
-            "flex flex-row overflow-x-hidden border-b border-neutral-700 bg-gradient-to-br from-neutral-800 to-black py-6"
-          }
-        >
-          <div className="mx-6 flex min-w-fit flex-shrink-0 flex-col">
+        <div className="flex-row overflow-x-hidden border-b border-neutral-700 bg-gradient-to-br from-neutral-800 to-black py-6 pl-6 xs:flex xs:pl-0">
+          <div className="mb-2 flex min-w-fit flex-shrink-0 xs:mx-6 xs:mb-0 xs:flex-col">
             <img
               src={picture || `https://robohash.org/${peer}.png`}
               alt="profile"
-              className="h-56 w-56 rounded-lg border border-neutral-700 object-contain"
+              className="h-24 w-24 flex-shrink-0 rounded-md border border-neutral-700 object-contain sm:h-56 sm:w-56"
             />
-            <button className="mt-3 rounded-lg border border-indigo-800 bg-indigo-800 px-3 py-1 font-medium text-neutral-200 hover:bg-opacity-70 active:bg-opacity-40">
-              Follow
-            </button>
-            <button className="mt-3 rounded-lg border border-indigo-800 bg-transparent px-3 py-1 font-medium text-neutral-200 transition duration-100 hover:bg-indigo-800 active:bg-opacity-70">
-              Mute
-            </button>
+            <div className="xs:flex xs:flex-col">
+              <button className="ml-4 mb-2 rounded-full border border-indigo-800 bg-indigo-800 px-3 py-1 font-medium text-neutral-200 hover:bg-opacity-70 active:bg-opacity-40 xs:ml-0 xs:mb-0 xs:mt-2 xs:rounded-md">
+                Follow
+              </button>
+              <button className="mr-3 ml-1 rounded-full border border-indigo-800 bg-transparent px-3 py-1 font-medium text-neutral-200 transition duration-100 hover:bg-indigo-800 active:bg-opacity-70 xs:mr-0 xs:ml-0 xs:mt-2 xs:rounded-md">
+                Mute
+              </button>
+            </div>
           </div>
 
           <div className="mr-6 flex min-w-0 flex-1 flex-col">
@@ -102,7 +100,7 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
             <div id="pubkey" className="mt-3">
               <h2>Pubkey</h2>
               <div className="flex">
-                <p className="flex-1 truncate rounded-bl-full rounded-tl-full border border-r-0 border-neutral-700 bg-neutral-900 px-4 py-2">
+                <p className="flex-1 overflow-clip rounded-bl-full rounded-tl-full border border-r-0 border-neutral-700 bg-neutral-900 px-4 py-2">
                   {toNpub(peer)}
                 </p>
                 <button

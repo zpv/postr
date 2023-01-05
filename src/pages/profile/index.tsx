@@ -48,7 +48,7 @@ function EditProfile({
 
   return (
     <div className="h-full w-full overflow-hidden bg-neutral-900">
-      <div className="grid h-full grid-cols-[180px_1fr]">
+      <div className="grid h-full grid-cols-[75px_1fr] sm:grid-cols-[180px_1fr]">
         <Layout {...{ user_profile }} {...{ tab }}>
           <EditProfileLayout
             {...{

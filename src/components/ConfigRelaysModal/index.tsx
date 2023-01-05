@@ -44,7 +44,7 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 items-center justify-center overflow-y-auto overflow-x-hidden outline-none focus:outline-none">
-        <div className="relative my-10 mx-auto w-2/3 max-w-3xl">
+        <div className="relative my-10 mx-auto w-auto max-w-3xl">
           {/*content*/}
           <div className="relative w-full rounded-lg border-0 bg-neutral-800 shadow-lg outline-none focus:outline-none">
             {/*header*/}
@@ -98,7 +98,7 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
               {/*footer*/}
               <div className="flex items-center justify-end rounded-b border-t border-solid border-neutral-700 p-2">
                 <button
-                  className="mr-1 mb-1 px-3 pt-1 font-medium text-gray-200 outline-none focus:outline-none active:text-gray-500"
+                  className="mr-1 mb-1 px-3 pt-1 text-gray-200 outline-none hover:underline focus:outline-none active:text-gray-500"
                   type="button"
                   onClick={() => setShowConfigRelaysModal(false)}
                 >

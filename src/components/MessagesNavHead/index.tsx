@@ -1,7 +1,7 @@
 const MessagesNavHead = () => {
   return (
     <>
-      <div className="px-3 pt-4">
+      <div className="px-3 pt-4 hidden xs:inline">
         <h1 className="ml-2 flex text-4xl">Messages</h1>
       </div>
     </>

@@ -19,7 +19,6 @@ const MessageBody: React.FC<MessageBodyProps> = ({
   setConversation,
 }) => {
   const messageRef = useRef();
-  const [isFirstLoad, setFirstLoad] = useState<boolean>(true);
   const [current_scroll, setCurrentScroll] = useState<number>(0);
   const [loadedMore, setLoadedMore] = useState<boolean>(false);
 
@@ -51,13 +50,11 @@ const MessageBody: React.FC<MessageBodyProps> = ({
   // }, [conversation]);
 
   useEffect(() => {
-    // if first load, scroll to bottom
-    if (isFirstLoad) {
-      setFirstLoad(false);
-      const element = messageRef.current as HTMLDivElement;
-      element.scrollTop = element.scrollHeight;
-    }
+    const element = messageRef.current as HTMLDivElement;
+    element.scrollTop = element.scrollHeight;
+  }, []);
 
+  useEffect(() => {
     // Set a flag to indicate whether a load is in progress
     let isFetching: boolean = false;
 
@@ -126,9 +123,6 @@ const MessageBody: React.FC<MessageBodyProps> = ({
   // flag to round message bubble corners
   let rounded_top: boolean = true;
 
-  // message body but insert timestamp if messages are more than 5 mins apart
-  // message_content.timestamp is in unix time
-
   const messageBody = conversation.map(
     (message_content: SingleMessage, i: number) => {
       // insert timestamp if two consecutive messages are more than 1 hour apart
@@ -168,7 +162,7 @@ const MessageBody: React.FC<MessageBodyProps> = ({
       return (
         <span key={message_content.id}>
           {insertTimestamp && (
-            <div className="text-center text-xs text-neutral-400">
+            <div className="mb-1 text-center text-xs text-neutral-400">
               {timeStr}
             </div>
           )}

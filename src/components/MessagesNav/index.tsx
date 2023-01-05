@@ -22,8 +22,7 @@ const MessagesNav: React.FC<MessagesNavProps> = ({
   return (
     <>
       <div
-        style={{ gridTemplateRows: "min-content min-content 1fr" }}
-        className="grid h-[100vh] border-r border-neutral-600 bg-black"
+        className="grid xs:grid-rows-[min-content_min-content_1fr] h-[100vh] border-r border-neutral-600 bg-black"
       >
         <MessagesNavHead />
         <MessagesNavList {...{ message_list, peer, profiles, setPeer }} />

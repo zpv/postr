@@ -190,8 +190,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
           handleEditProfile(e);
         }}
       >
-        <div className="mb-4 grid max-h-full grid-cols-2 gap-1 border-b border-neutral-800 pb-5">
-          <div className="rounded-tl-xl rounded-bl-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
+        <div className="mb-4 max-h-full grid-cols-2 gap-1 border-b border-neutral-800 pb-5 xs:grid">
+          <div className="rounded-tl-xl rounded-tr-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5 xs:rounded-bl-xl xs:rounded-tr-none">
             <h2>Display name:</h2>
             <input
               type="text"
@@ -210,15 +210,15 @@ const EditProfile: React.FC<EditProfileProps> = ({
               defaultValue={user_profile?.nip05 || ""}
             />
           </div>
-          <div className="rounded-tr-xl rounded-br-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
+          <div className="rounded-br-xl rounded-bl-xl bg-neutral-800 bg-opacity-50 px-4 pb-5 xs:rounded-tr-xl xs:rounded-bl-none xs:pt-3 ">
             <h2>Image:</h2>
-            <div className="h-52 w-52 flex-shrink-0 rounded-xl border-2 border-neutral-800 bg-neutral-900 object-contain">
+            <div className="h-52 w-52 rounded-xl border-2 border-neutral-800 bg-neutral-900">
               <img
                 src={
                   user_profile?.picture ||
                   `https://robohash.org/${user_profile.pubkey}.png`
                 }
-                className="h-full w-full"
+                className="h-full w-full flex-shrink-0 object-contain"
               />
             </div>
 
@@ -276,16 +276,16 @@ const EditProfile: React.FC<EditProfileProps> = ({
               </button>
             </div>
           </div>
-          <div className="my-2 flex items-center">
+          <div className="my-2">
             <button
-              className="mb-3 rounded-sm border border-indigo-800 border-opacity-0 bg-indigo-800 px-4 py-2  font-medium text-white hover:bg-opacity-70 active:bg-opacity-40"
+              className="mr-2 mb-2 rounded-sm border border-indigo-800 border-opacity-0 bg-indigo-800 px-4 py-2  font-medium text-white hover:bg-opacity-70 active:bg-opacity-40"
               onClick={() => setShowPrivKeyModal(true)}
               type="button"
             >
               Import private key
             </button>
             <button
-              className="mx-2 mb-3 rounded-sm border border-indigo-800 bg-neutral-900 px-4 py-2 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
+              className="mb-3 rounded-sm border border-indigo-800 bg-neutral-900 px-4 py-2 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
               onClick={() => setShowConfigRelaysModal(true)}
               type="button"
             >

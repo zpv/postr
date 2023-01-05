@@ -63,7 +63,9 @@
         "height": 600,
         "resizable": true,
         "title": "postr",
-        "width": 800
+        "width": 900,
+        "minHeight": 300,
+        "minWidth": 500
       }
     ]
   }

@@ -33,12 +33,22 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
 
   return (
     <>
-      <div className="flex flex-row border-b border-neutral-600 p-4">
+      <div className="flex flex-row border-b border-neutral-600 p-3 sm:pl-3 sm:pt-3 sm:pb-1 sm:pr-0">
         <img
           src={picture || `https://robohash.org/${pubkey}.png`}
-          className="h-12 w-12 rounded-lg border border-neutral-700 bg-neutral-900 object-contain"
+          className="hidden h-12 w-12 flex-shrink-0 rounded-lg border border-neutral-700 bg-neutral-900 object-contain sm:inline"
         />
-        <div className="grid grid-rows-2 items-center text-start">
+
+        <span className="inline sm:hidden">
+          <Link href="/profile">
+            <img
+              src={picture || `https://robohash.org/${pubkey}.png`}
+              className="h-12 w-12 flex-shrink-0 cursor-pointer rounded-lg border border-neutral-700 bg-neutral-900 object-contain"
+            />
+          </Link>
+        </span>
+
+        <div className="hidden w-full grid-rows-2 sm:grid">
           {/* <h1 className="text-xl mx-2 truncate overflow-hidden">{display_name ? display_name : "no name"}</h1> */}
           <h1
             className="mx-1 cursor-pointer overflow-hidden truncate rounded-lg px-1 text-xl hover:ripple-bg-neutral-800"
@@ -51,7 +61,7 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
             {!isHovering && display_name}
           </h1>
           <Link href="/profile">
-            <h2 className="mx-2 cursor-pointer text-neutral-600 hover:underline">
+            <h2 className="ml-2 cursor-pointer text-neutral-600 hover:underline">
               Edit profile
             </h2>
           </Link>

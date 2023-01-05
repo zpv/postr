@@ -34,11 +34,8 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
         src={picture || `https://robohash.org/${peer}.png`}
         className="mr-2 h-12 w-12 flex-shrink-0 rounded-lg border border-neutral-700 bg-neutral-900 object-contain"
       />
-      <div className="grid w-full grid-rows-2">
-        <div
-          style={{ gridTemplateRows: "1fr" }}
-          className={"group flex w-[160px] flex-row"}
-        >
+      <div className="hidden w-full grid-rows-2 xs:grid">
+        <div className={"group flex w-[160px] flex-row"}>
           {/* if mouse hovers over -> show */}
           <h1 className="hidden truncate text-gray-400 group-hover:inline">
             {hover_text}

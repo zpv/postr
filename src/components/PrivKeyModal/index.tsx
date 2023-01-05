@@ -89,7 +89,7 @@ const PrivKeyModal: React.FC<PrivKeyModalProps> = ({
                 </p>
                 <input
                   type="text"
-                  className="my-3 w-[500px] border border-neutral-700 bg-neutral-700 bg-opacity-0 py-1 px-2 text-neutral-200 outline-none focus:placeholder-transparent"
+                  className="my-3 w-full border border-neutral-700 bg-neutral-700 bg-opacity-0 py-1 px-2 text-neutral-200 outline-none focus:placeholder-transparent"
                   placeholder="Private key..."
                   autoFocus={true}
                 />
@@ -97,7 +97,7 @@ const PrivKeyModal: React.FC<PrivKeyModalProps> = ({
               {/*footer*/}
               <div className="flex items-center justify-end rounded-b border-t border-solid border-neutral-700 p-2">
                 <button
-                  className="background-transparent mr-1 mb-1 px-3 pt-1 font-medium text-gray-200 outline-none focus:outline-none active:text-gray-500"
+                  className="background-transparent mr-1 mb-1 px-3 pt-1 text-gray-200 outline-none hover:underline focus:outline-none active:text-gray-500"
                   type="button"
                   onClick={() => setShowPrivKeyModal(false)}
                 >
