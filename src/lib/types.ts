@@ -21,6 +21,12 @@ export type SingleMessage = {
   timestamp: number;
 };
 
+export type SuggestionItem = {
+  peer: string;
+  name: string;
+  last_message?: string;
+};
+
 export type ConversationsListItem = {
   peer: string;
   last_message: number; // temporarily? a unix timestamp
