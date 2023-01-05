@@ -115,16 +115,20 @@ pub fn user_profiles(
 
     let subscription = Subscription {
         id: "idk".to_string(),
-        filters: vec![ReqFilter {
-            ids: None,
-            kinds: Some([0].to_vec()),
-            since: None,
-            until: None,
-            authors: Some(pubkeys.iter().map(|s| s.to_string()).collect()),
-            limit: Some(1),
-            tags: None,
-            force_no_match: false,
-        }]
+        // create a filter for each pubkey
+        filters: pubkeys
+            .iter()
+            .map(|pubkey| ReqFilter {
+                ids: None,
+                kinds: Some([0].to_vec()),
+                since: None,
+                until: None,
+                authors: Some([pubkey.to_string()].to_vec()),
+                limit: Some(1),
+                tags: None,
+                force_no_match: false,
+            })
+            .collect(),
     };
 
     let req = Req::new(Some("user_profiles"), subscription.filters);
