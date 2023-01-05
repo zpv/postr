@@ -60,7 +60,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
 
   return (
     <>
-      <div className="p-3">
+      <div className="hidden p-3 xs:block">
         <form
           onSubmit={handleSubmit}
           className="flex flex-row items-center justify-between"
@@ -87,10 +87,10 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
             <div
               onClick={() => handleClick(msg.peer)}
               className={
-                "flex cursor-pointer flex-row border-indigo-600 p-3 transition duration-100 " +
+                "flex cursor-pointer flex-row border-indigo-600 p-3 " +
                 (peer && msg.peer === peer
                   ? "border-r-2 bg-neutral-900"
-                  : "hover:bg-neutral-900")
+                  : "hover:bg-neutral-900 active:bg-opacity-70")
               }
               key={msg.peer}
             >

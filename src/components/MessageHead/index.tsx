@@ -30,7 +30,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
 
   return (
     <>
-      <div className="flex min-w-0 flex-row  border-b border-neutral-700 bg-neutral-800">
+      <div className="flex min-w-0 flex-row border-b border-neutral-700 bg-neutral-800">
         <div
           className="group mr-3 flex min-w-0 flex-1 cursor-pointer flex-row hover:ripple-bg-neutral-700"
           onClick={copyToClipboard}

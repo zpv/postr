@@ -31,7 +31,7 @@ function Feed({ user_profile }) {
 
   return (
     <div className="h-full w-full overflow-hidden bg-neutral-900">
-      <div className="flex h-full">
+      <div className="grid h-full grid-cols-[75px_1fr] xs:grid-cols-[75px_1fr] sm:grid-cols-[180px_1fr]">
         <Layout {...{ user_profile }} {...{ tab }}>
           {pageBody}
         </Layout>
