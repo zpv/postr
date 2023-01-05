@@ -21,7 +21,6 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
   setPeer,
 }) => {
   const [searchFilter, setSearchFilter] = useState<string>("");
-  let itemId: number = 1;
 
   const handleClick = (pubkey: string) => {
     setPeer(pubkey);
@@ -93,7 +92,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
                   ? "border-r-2 bg-neutral-900"
                   : "hover:bg-neutral-900")
               }
-              key={itemId++}
+              key={msg.peer}
             >
               <MessagesNavListItem {...profiles[msg.peer]} {...msg} />
             </div>

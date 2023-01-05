@@ -41,7 +41,7 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
               User Details
             </h1>
             <div
-              className="my-auto mx-3 ml-auto flex cursor-pointer rounded-lg p-2 opacity-50 transition duration-100 hover:bg-neutral-700 active:opacity-20"
+              className="my-auto mx-3 ml-auto flex flex-shrink-0 cursor-pointer rounded-lg p-2 opacity-50 transition duration-100 hover:bg-neutral-700 active:opacity-20"
               onClick={() => setShowUserInfo(false)}
             >
               <img src={info?.src || ""} alt="info" className="h-5 w-5" />
@@ -50,15 +50,17 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
         </div>
       </div>
 
-      <div className="min-w-0 overflow-auto bg-neutral-900">
+      <div className="min-w-0 overflow-y-auto bg-neutral-900">
         <div
-          className={`flex flex-row border-b border-neutral-700 bg-gradient-to-br from-neutral-800 to-black py-6`}
+          className={
+            "flex flex-row overflow-x-hidden border-b border-neutral-700 bg-gradient-to-br from-neutral-800 to-black py-6"
+          }
         >
-          <div className="mx-6 flex min-w-fit flex-col">
+          <div className="mx-6 flex min-w-fit flex-shrink-0 flex-col">
             <img
               src={picture || `https://robohash.org/${peer}.png`}
               alt="profile"
-              className="h-56 w-56 rounded-lg border border-white border-opacity-20"
+              className="h-56 w-56 rounded-lg border border-neutral-700 object-contain"
             />
             <button className="mt-3 rounded-lg border border-indigo-800 bg-indigo-800 px-3 py-1 font-medium text-neutral-200 hover:bg-opacity-70 active:bg-opacity-40">
               Follow
@@ -75,7 +77,7 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
                 {nip05 && (
                   <img
                     src={verifIcon.src}
-                    className="my-auto ml-1 h-5 w-5 leading-none opacity-20"
+                    className="my-auto ml-1 h-5 w-5 flex-shrink-0 leading-none opacity-20"
                   />
                 )}
               </div>

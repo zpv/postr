@@ -42,9 +42,11 @@ const RelaysList: React.FC<RelaysListProps> = ({
               e.preventDefault();
               const value: string = inputRef.current.value.trim().toLowerCase();
               inputRef.current.value = "";
-              const newRelays = relays.map((relay) => relay.toLowerCase());
-
               if (value === "") return;
+
+              const newRelays = relays.map((relay: string) =>
+                relay.toLowerCase().replace(" ", "-")
+              );
 
               newRelays.push(value);
               setRelays(newRelays);
