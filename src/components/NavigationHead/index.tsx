@@ -36,7 +36,7 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
       <div className="flex flex-row border-b border-neutral-600 p-4">
         <img
           src={picture || `https://robohash.org/${pubkey}.png`}
-          className="h-12 rounded-lg border border-white border-opacity-20 bg-neutral-900"
+          className="h-12 w-12 rounded-lg border border-neutral-700 bg-neutral-900 object-contain"
         />
         <div className="grid grid-rows-2 items-center text-start">
           {/* <h1 className="text-xl mx-2 truncate overflow-hidden">{display_name ? display_name : "no name"}</h1> */}

@@ -36,75 +36,83 @@ pub enum NostrMessage {
 
 pub struct RelaySocket {
     relay: String,
+    tx: Option<Sender<String>>,
+    shutdown_tx: Option<broadcast::Sender<()>>,
 
     // The channel the socket will send events to
     event_tx: tokio::sync::mpsc::Sender<Event>,
-    shutdown_tx: Option<broadcast::Sender<()>>,
 }
 
 pub struct RelayPool {
-    broadcast_txs: Vec<broadcast::Sender<String>>,
-    relay_sockets: Vec<RelaySocket>,
+    relay_sockets_hashmap: std::collections::HashMap<String, RelaySocket>,
     event_tx: tokio::sync::mpsc::Sender<Event>,
 }
 
 impl RelayPool {
     pub fn new(relays: Vec<&str>, event_tx: tokio::sync::mpsc::Sender<Event>) -> Self {
-        let mut relay_sockets = Vec::new();
+        let mut relay_sockets_hashmap: std::collections::HashMap<String, RelaySocket> =
+            std::collections::HashMap::new();
 
-        let broadcast_txs: Vec<Sender<String>> = relays
-            .into_iter()
-            .map(|relay| {
-                let event_tx = event_tx.clone();
-                let mut relay = RelaySocket::new(relay.to_string(), event_tx);
-                let tx = relay.connect();
-                relay_sockets.push(relay);
-                tx
-            })
-            .collect();
+        for relay in relays {
+            if relay_sockets_hashmap.contains_key(relay) {
+                continue;
+            }
+
+            let mut relay = RelaySocket::new(relay.to_string(), event_tx.clone());
+            relay.connect();
+            relay_sockets_hashmap.insert(relay.get_relay(), relay);
+        }
         Self {
-            broadcast_txs,
-            relay_sockets,
+            relay_sockets_hashmap,
             event_tx,
         }
     }
 
-    pub fn add(&mut self, tx: broadcast::Sender<String>) {
-        self.broadcast_txs.push(tx);
+    pub fn add(&mut self, relay: &str) {
+        if !self.relay_sockets_hashmap.contains_key(relay) {
+            let event_tx = self.event_tx.clone();
+            let mut relay = RelaySocket::new(relay.to_string(), event_tx);
+            relay.connect();
+            self.relay_sockets_hashmap.insert(relay.get_relay(), relay);
+        }
     }
 
     pub fn set_relays(&mut self, relays: Vec<&str>) {
-        // stop current relays
-        for relay in self.relay_sockets.iter() {
-            info!("Sending shutdown relay {}", relay.get_relay());
-            relay.shutdown();
+        // if relay in hashmap but not in relays, shutdown and remove socket
+        let keys = self
+            .relay_sockets_hashmap
+            .keys()
+            .cloned()
+            .collect::<Vec<String>>();
+        for relay in keys {
+            if !relays.contains(&relay.as_str()) {
+                let relay = self.relay_sockets_hashmap.get(&relay).unwrap();
+                relay.shutdown();
+                self.relay_sockets_hashmap.remove(&relay.get_relay());
+            }
         }
 
-        let mut relay_sockets = Vec::new();
-        let broadcast_txs: Vec<Sender<String>> = relays
-            .into_iter()
-            .map(|relay| {
+        // if relay not in hashmap, create new socket
+        for relay in relays {
+            if !self.relay_sockets_hashmap.contains_key(relay) {
                 let event_tx = self.event_tx.clone();
                 let mut relay = RelaySocket::new(relay.to_string(), event_tx);
-                let tx = relay.connect();
-                relay_sockets.push(relay);
-                tx
-            })
-            .collect();
-        self.broadcast_txs = broadcast_txs;
-        self.relay_sockets = relay_sockets;
+                relay.connect();
+                self.relay_sockets_hashmap.insert(relay.get_relay(), relay);
+            }
+        }
     }
 
     pub fn get_relays(&self) -> Vec<String> {
-        let mut relays = Vec::new();
-        for relay in self.relay_sockets.iter() {
-            relays.push(relay.get_relay());
-        }
-        relays
+        self.relay_sockets_hashmap
+            .keys()
+            .cloned()
+            .collect::<Vec<String>>()
     }
 
     pub fn send(&mut self, msg: String) {
-        for tx in self.broadcast_txs.iter() {
+        for relay in self.relay_sockets_hashmap.values() {
+            let tx = relay.get_tx().unwrap();
             match tx.send(msg.clone()) {
                 Ok(_) => {}
                 Err(e) => {
@@ -119,6 +127,7 @@ impl RelaySocket {
     pub fn new(relay: String, event_tx: tokio::sync::mpsc::Sender<Event>) -> Self {
         Self {
             relay,
+            tx: None,
             event_tx,
             shutdown_tx: None,
         }
@@ -128,7 +137,11 @@ impl RelaySocket {
         self.relay.clone()
     }
 
-    pub fn connect(&mut self) -> broadcast::Sender<String> {
+    pub fn get_tx(&self) -> Option<Sender<String>> {
+        self.tx.clone()
+    }
+
+    pub fn connect(&mut self) {
         let (tx, _) = broadcast::channel::<String>(32);
         let (invoke_shutdown, mut shutdown_listen) = broadcast::channel::<()>(1);
         self.shutdown_tx = Some(invoke_shutdown.clone());
@@ -307,7 +320,7 @@ impl RelaySocket {
             }
         });
 
-        return tx;
+        self.tx = Some(tx);
     }
 
     pub fn shutdown(&self) {

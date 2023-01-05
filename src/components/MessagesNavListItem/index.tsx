@@ -32,7 +32,7 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
     <>
       <img
         src={picture || `https://robohash.org/${peer}.png`}
-        className="mr-2 h-12 rounded-lg border border-white border-opacity-20 bg-neutral-900"
+        className="mr-2 h-12 w-12 flex-shrink-0 rounded-lg border border-neutral-700 bg-neutral-900 object-contain"
       />
       <div className="grid w-full grid-rows-2">
         <div

@@ -212,7 +212,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
           </div>
           <div className="rounded-tr-xl rounded-br-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Image:</h2>
-            <div className="h-52 w-52 rounded-xl border-2 border-neutral-800 bg-neutral-900">
+            <div className="h-52 w-52 flex-shrink-0 rounded-xl border-2 border-neutral-800 bg-neutral-900 object-contain">
               <img
                 src={
                   user_profile?.picture ||
@@ -242,12 +242,14 @@ const EditProfile: React.FC<EditProfileProps> = ({
             <p className="mx-3" ref={msgRef}></p>
             <button
               type="submit"
-              className={"rounded-sm px-4 py-2 font-medium my-2 w-min ml-auto " + 
+              className={
+                "my-2 ml-auto w-min rounded-sm px-4 py-2 font-medium " +
                 (changesMade
                   ? "bg-indigo-800 text-white hover:bg-opacity-70 active:bg-opacity-40"
-                  : "bg-neutral-800 text-neutral-500 cursor-not-allowed")
+                  : "cursor-not-allowed bg-neutral-800 text-neutral-500")
               }
-              disabled={!changesMade}>
+              disabled={!changesMade}
+            >
               Save
             </button>
           </div>

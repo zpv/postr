@@ -11,7 +11,6 @@ interface PrivKeyModalProps {
 const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
   setShowConfigRelaysModal,
 }) => {
-  const icon = text_icon;
   const inputRef = useRef(null);
   const textAreaRef = useRef(null);
   const [relays, setRelays] = useState<string[]>([]);
@@ -58,7 +57,7 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
                     ? "border-neutral-600 bg-neutral-900"
                     : "opacity-100")
                 }
-                src={icon.src}
+                src={text_icon.src}
                 onClick={() => {
                   if (viewRaw) {
                     const newRelays = textAreaRef.current.value

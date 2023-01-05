@@ -32,13 +32,13 @@ const MessageHead: React.FC<MessageHeadProps> = ({
     <>
       <div className="flex min-w-0 flex-row  border-b border-neutral-700 bg-neutral-800">
         <div
-          className="group flex min-w-0 flex-1 cursor-pointer flex-row hover:ripple-bg-neutral-700 mr-3"
+          className="group mr-3 flex min-w-0 flex-1 cursor-pointer flex-row hover:ripple-bg-neutral-700"
           onClick={copyToClipboard}
         >
           <img
             src={picture || `https://robohash.org/${peer}.png`}
             alt="profile"
-            className="m-3 h-10 w-10 rounded-lg border border-white border-opacity-20"
+            className="m-3 h-10 w-10 flex-shrink-0 rounded-lg border border-neutral-700 object-contain"
           />
           <div className="my-auto overflow-hidden truncate text-neutral-200">
             <h1 className="hidden truncate text-gray-400 group-hover:inline">
@@ -54,7 +54,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
                 <div className="flex flex-row">
                   <img
                     src={verifIcon.src}
-                    className="my-auto mr-1 h-3 w-3 leading-none opacity-20"
+                    className="my-auto mr-1 h-3 w-3 flex-shrink-0 leading-none opacity-20"
                   />
                   <div className="flex items-center">
                     <span className="text-gray-400" style={{ height: 21 }}>
@@ -67,7 +67,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
           </div>
         </div>
         <div
-          className="my-auto mr-3 ml-auto cursor-pointer rounded-lg p-2 opacity-50 hover:bg-neutral-700 transition duration-100 active:opacity-20"
+          className="my-auto mr-3 ml-auto cursor-pointer rounded-lg p-2 opacity-50 transition duration-100 hover:bg-neutral-700 active:opacity-20"
           onClick={() => setShowUserInfo(true)}
         >
           <img src={info?.src || ""} alt="info" className="h-5 w-5" />
