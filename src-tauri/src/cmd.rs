@@ -46,11 +46,22 @@ pub fn set_privkey(privkey: &str, state: tauri::State<PostrState>) -> Result<(),
     let mut state = state.0.write().unwrap();
 
     // verify privkey is valid
-    let identity = Identity::from_str(privkey).unwrap();
+    let identity = match Identity::from_str(privkey) {
+        Ok(identity) => identity,
+        Err(e) => {
+            return Err(format!("Invalid private key: {}", e));
+        }
+    };
     state.privkey = privkey.to_string();
     state.pubkey = identity.public_key_str;
 
     Ok(())
+}
+
+#[command]
+pub fn get_privkey(state: tauri::State<PostrState>) -> Result<String, String> {
+    let state = state.0.read().unwrap();
+    Ok(state.privkey.clone())
 }
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -292,7 +303,13 @@ pub fn user_dms(
 ) -> Result<Vec<PrivateMessageWithRecipient>, String> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
-    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
+    let x_pub_key: secp256k1::XOnlyPublicKey = match secp256k1::XOnlyPublicKey::from_str(peer) {
+        Ok(x) => x,
+        Err(e) => {
+            return Err(format!("Invalid pubkey: {}", e));
+        }
+    };    
+
 
     let subscription = Subscription {
         id: "idk".to_string(),
