@@ -14,6 +14,7 @@ use crate::state::PostrState;
 use crate::subscription::Req;
 use crate::subscription::ReqFilter;
 use crate::subscription::Subscription;
+use reqwest;
 use nostr_rust::events::EventPrepare;
 use nostr_rust::nips::nip4::decrypt;
 use nostr_rust::nips::nip4::encrypt;
@@ -512,6 +513,16 @@ pub async fn sub_to_msg_events(
     }
 
     Ok(())
+}
+
+#[command]
+pub async fn fetch(
+    url: String,
+) -> Result<serde_json::Value, String> {
+    // call map_err to convert the error to a string
+    let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+    let json = resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())?;
+    Ok(json)
 }
 
 #[command]

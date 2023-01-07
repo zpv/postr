@@ -79,17 +79,18 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
 
         const handleFetch = async () => {
           if (local_part) {
-            return await fetch(
-              `https://${domain}/.well-known/nostr.json?name=${local_part}`
-            );
+            return await invoke("fetch", {
+              url: `https://${domain}/.well-known/nostr.json?name=${local_part}`,
+            });
           } else {
-            return await fetch(`https://${domain}/.well-known/nostr.json`);
+            return await invoke("fetch", {
+              url: `https://${domain}/.well-known/nostr.json`,
+            });
           }
         };
 
         handleFetch()
-          .then((response) => response.json())
-          .then((data) => {
+          .then((data: any) => {
             // if "_" exists, then create a suggestion with NIP-05 maintainer as the last_message
             if (data.names["_"]) {
               const pubkey = data.names["_"];

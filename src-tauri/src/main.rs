@@ -3,9 +3,9 @@ extern crate websocket;
 
 use postr::cmd::{
     get_privkey, get_pubkey, get_relays, send_dm, set_privkey, set_relays, set_user_info,
-    sub_to_msg_events, unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles,
+    sub_to_msg_events, unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles, fetch,
 };
-use postr::db;
+use postr::{db, __cmd__fetch};
 use postr::event::Event;
 use postr::socket::RelayPool;
 use postr::state::{InnerState, PostrState};
@@ -163,7 +163,8 @@ fn main() {
                 set_user_info,
                 get_relays,
                 set_relays,
-                user_profiles
+                user_profiles,
+                fetch
             ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");
