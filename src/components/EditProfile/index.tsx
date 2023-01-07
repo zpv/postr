@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { toNpub } from "../../helpers/pubkey";
+import { fromNpub, toNpub, toNsec } from "../../helpers/nip19";
 import {
   Profile,
   Profiles,
@@ -290,7 +290,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
               <input
                 type="text"
                 className={style + " cursor-pointer"}
-                value={privkey || "Click to reveal..."}
+                value={toNsec(privkey) || "Click to reveal..."}
                 onClick={handleShowPrivKey}
                 readOnly
                 ref={privkeyRef}
@@ -298,10 +298,10 @@ const EditProfile: React.FC<EditProfileProps> = ({
               <button
                 onClick={() => {
                   if (privkey) {
-                    copyToClipboard(privkey);
+                    copyToClipboard(toNsec(privkey));
                   } else {
                     invoke("get_privkey").then((privkey: string) => {
-                      copyToClipboard(privkey);
+                      copyToClipboard(toNsec(privkey));
                     });
                   }
                 }}

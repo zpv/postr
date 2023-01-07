@@ -1,5 +1,5 @@
 import verifIcon from "../../assets/verif.png";
-import { toNpub } from "../../helpers/pubkey";
+import { toNpub } from "../../helpers/nip19";
 import getFormattedMsgRecvTime from "../../helpers/timeHelpers";
 
 interface MessagesNavListItemProps {

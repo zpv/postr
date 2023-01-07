@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { SetBooleanState } from "../../lib/types";
 import verifIcon from "../../assets/verif.png";
 import info from "../../assets/info.png";
-import { toNpub } from "../../helpers/pubkey";
+import { toNpub } from "../../helpers/nip19";
 
 interface MessageInfoViewProps {
   setShowUserInfo: SetBooleanState;

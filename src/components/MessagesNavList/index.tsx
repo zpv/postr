@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useState } from "react";
-import { toNpub, toPubkeyOrNone } from "../../helpers/pubkey";
+import { toNpub, toPubkeyOrNone } from "../../helpers/nip19";
 import {
   ConversationsListItem,
   Profile,
@@ -40,6 +40,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
     const pubkey = toPubkeyOrNone(searchFilter);
     if (pubkey) {
       setPeer(pubkey);
+      setSearchFilter("");
     } else {
       for (let i = 0; i < message_list.length; i++) {
         if (!filteredOut(message_list[i])) {
@@ -89,7 +90,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
         handleFetch()
           .then((response) => response.json())
           .then((data) => {
-            // if "_" exists, then create a suggestion for it with the name being "Root"
+            // if "_" exists, then create a suggestion with NIP-05 maintainer as the last_message
             if (data.names["_"]) {
               const pubkey = data.names["_"];
               const nip05 = "@" + domain;
@@ -117,7 +118,6 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
 
             const getProfiles: () => Promise<Profiles> = async () => {
               const res: Profiles = profiles;
-              console.log(pubkeys);
               const raw_profiles = await invoke<Profile[]>("user_profiles", {
                 pubkeys,
               });
@@ -130,7 +130,6 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
 
             // get profile for each pubkey then set profiles
             getProfiles().then((res) => {
-              console.log("res: ", res);
               setProfiles((prev) => ({ ...prev, ...res }));
             });
 

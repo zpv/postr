@@ -1,7 +1,7 @@
 import info from "../../assets/info.png";
 import verifIcon from "../../assets/verif.png";
 import { SetBooleanState } from "../../lib/types";
-import { toNpub } from "../../helpers/pubkey";
+import { toNpub } from "../../helpers/nip19";
 
 interface MessageHeadProps {
   name?: string;
