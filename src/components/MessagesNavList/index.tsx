@@ -1,8 +1,11 @@
+import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useState } from "react";
 import { toNpub, toPubkeyOrNone } from "../../helpers/pubkey";
 import {
   ConversationsListItem,
+  Profile,
   Profiles,
+  SetProfilesState,
   SetStringState,
   SuggestionItem,
 } from "../../lib/types";
@@ -11,6 +14,7 @@ import MessagesNavListItem from "../MessagesNavListItem";
 interface MessagesNavListProps {
   message_list: ConversationsListItem[];
   peer: string;
+  setProfiles: SetProfilesState;
   profiles: Profiles;
   setPeer: SetStringState;
 }
@@ -18,6 +22,7 @@ interface MessagesNavListProps {
 const MessagesNavList: React.FC<MessagesNavListProps> = ({
   message_list,
   peer,
+  setProfiles,
   profiles,
   setPeer,
 }) => {
@@ -63,17 +68,6 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
   };
 
   useEffect(() => {
-    // nip-05 starts with @ followed by a domain name like @example.com
-    // example.com/.well-known/nostr.json has a json of format
-    // {
-    //   "names": {
-    //     "steven": "3f2a859b68e9cf09c9c7a9d7173b8a66b14557261c7b8376df100af73eb12e3d",
-    //     "kelvin": "73ee0c7420638fe8e01e528a6af60c272a1786a752e4249158f79ded8f0ef9c8",
-    //     "_": "3f2a859b68e9cf09c9c7a9d7173b8a66b14557261c7b8376df100af73eb12e3d"
-    //   }
-    // }
-    // if searchFilter starts with @, get the json from the domain name and set suggestions to the list of names
-
     const fetchSuggestions = async () => {
       if (searchFilter !== "" && searchFilter.includes("@")) {
         const local_part = searchFilter.split("@")[0];
@@ -109,8 +103,9 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
               setSuggestions([suggestion]);
             }
             const names = data.names;
+            const pubkeys: string[] = Object.values(names);
+
             // delete names[name] if the pubkey is already in the message_list
-            // const pubkeys: string[] = Object.values(names);
             // for (let i = 0; i < message_list.length; i++) {
             //   const pubkey = message_list[i].peer;
             //   if (pubkeys.includes(pubkey)) {
@@ -119,6 +114,26 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
             //     ];
             //   }
             // }
+
+            const getProfiles: () => Promise<Profiles> = async () => {
+              const res: Profiles = profiles;
+              console.log(pubkeys);
+              const raw_profiles = await invoke<Profile[]>("user_profiles", {
+                pubkeys,
+              });
+
+              for (const raw_profile of raw_profiles) {
+                res[raw_profile.pubkey] = raw_profile;
+              }
+              return res;
+            };
+
+            // get profile for each pubkey then set profiles
+            getProfiles().then((res) => {
+              console.log("res: ", res);
+              setProfiles((prev) => ({ ...prev, ...res }));
+            });
+
             const suggestions = Object.keys(names).map((name) => {
               const pubkey = names[name];
               const nip05 = name + "@" + domain;
@@ -185,6 +200,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
             </div>
           );
         })}
+
         {searchFilter !== "" &&
           searchFilter.includes("@") &&
           suggestions.length > 0 && (
@@ -206,7 +222,7 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
                     }
                     key={s.name + s.peer}
                   >
-                    <MessagesNavListItem {...profiles[s.peer]} {...s} />
+                    <MessagesNavListItem {...s} {...profiles[s.peer]} />
                   </div>
                 );
               })}
