@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { useRef } from "react";
-import { randomPubkey } from "../../helpers/pubkey";
+import { randomPubkey } from "../../helpers/nip19";
 import {
   SetBooleanState,
   SetConversationsListState,

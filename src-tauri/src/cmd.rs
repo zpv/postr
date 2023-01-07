@@ -537,7 +537,13 @@ pub fn send_dm(
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
 
-    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
+    let x_pub_key = match secp256k1::XOnlyPublicKey::from_str(peer) {
+        Ok(x_pub_key) => x_pub_key,
+        Err(e) => {
+            error!("send_dm: Invalid pubkey: {}", e);
+            return Err(());
+        }
+    };
     let encrypted_message = encrypt(&identity.secret_key, &x_pub_key, message).unwrap();
 
     let event = EventPrepare {

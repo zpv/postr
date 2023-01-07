@@ -30,3 +30,8 @@ export const toPubkeyOrNone = (pubkeyOrNpub: string): string => {
 export const randomPubkey = (): string => {
   return Buffer.from(sha256(Math.random().toString())).toString("hex");
 };
+
+export const toNsec = (nsec: string) => {
+  if (!nsec) return "";
+  return nip19.nsecEncode(nsec);
+};
