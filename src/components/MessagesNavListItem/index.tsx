@@ -1,10 +1,10 @@
 import verifIcon from "../../assets/verif.png";
-import { toNpub } from "../../helpers/pubkey";
+import { toNpub } from "../../helpers/nip19";
 import getFormattedMsgRecvTime from "../../helpers/timeHelpers";
 
 interface MessagesNavListItemProps {
   nip05?: string;
-  last_message: number;
+  last_message?: string | number;  // last_message is a temporarily? a unix timestamp
   picture?: string;
   name?: string;
   peer: string;
@@ -25,8 +25,7 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
   const hover_text: string =
     (nip05 && "@" + nip05?.split("@")[1]) || npub_truncated;
 
-  // last_message is a temporarily? a unix timestamp
-  const timestamp_string: string = getFormattedMsgRecvTime(last_message);
+  const last_message_formatted = (typeof last_message === "number" && getFormattedMsgRecvTime(last_message)) || last_message;
 
   return (
     <>
@@ -34,7 +33,7 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
         src={picture || `https://robohash.org/${peer}.png`}
         className="mr-2 h-12 w-12 flex-shrink-0 rounded-lg border border-neutral-700 bg-neutral-900 object-contain"
       />
-      <div className="hidden w-full grid-rows-2 xs:grid">
+      <div className={"hidden w-full grid-rows-2"  + (last_message_formatted ? " xs:grid" : " xs:inline my-auto")}>
         <div className={"group flex w-[160px] flex-row"}>
           {/* if mouse hovers over -> show */}
           <h1 className="hidden truncate text-gray-400 group-hover:inline">
@@ -52,7 +51,7 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
             />
           )}
         </div>
-        <p className="truncate text-xs text-neutral-500">{timestamp_string}</p>
+        {last_message_formatted && <p className="truncate text-xs text-neutral-500">{last_message_formatted}</p>}
       </div>
     </>
   );

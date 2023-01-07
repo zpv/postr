@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import LoadingWheel from "../components/LoadingWheel";
-import { randomPubkey } from "../helpers/pubkey";
+import { randomPubkey } from "../helpers/nip19";
 
 function App({ listenFunc, setListenFunc }) {
   const [privkey, setPrivkey] = useState<string>("");
@@ -20,8 +20,6 @@ function App({ listenFunc, setListenFunc }) {
 
   const launchApp = async (privkey: string) => {
     await invoke("set_privkey", { privkey });
-
-    // invoke("sub_to_msg_events");
     setListenFunc(invoke("sub_to_msg_events"));
 
     router.push("/messages");

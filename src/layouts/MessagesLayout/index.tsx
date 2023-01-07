@@ -296,6 +296,7 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
         {...{
           message_list,
           peer,
+          setProfiles,
           profiles,
           setPeer,
         }}
