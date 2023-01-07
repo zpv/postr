@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha256";
 import { nip19 } from "nostr-tools";
 
 // all pubkeys should be rendered as bech32 encoded strings
@@ -24,4 +25,8 @@ export const toPubkeyOrNone = (pubkeyOrNpub: string): string => {
   } catch (e) {
     return "";
   }
+};
+
+export const randomPubkey = (): string => {
+  return Buffer.from(sha256(Math.random().toString())).toString("hex");
 };
