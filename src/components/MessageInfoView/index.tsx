@@ -82,7 +82,7 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
 
               {nip05 && (
                 <p className="truncate text-2xl font-thin text-neutral-500">
-                  @{nip05.split("@")[1]}
+                  @{nip05.split("@")[1].toLowerCase()}
                 </p>
               )}
             </div>

@@ -176,14 +176,23 @@ pub fn user_profiles(
 }
 
 #[command]
-pub async fn verify_nip05(nip05: String, pubkey: String) -> Result<bool, String> {
+pub async fn verify_nip05(name: String, nip05: String, pubkey: String) -> Result<bool, String> {
     if nip05.is_empty() || !nip05.contains('@') {
-        return Ok(false);
+        return Err("nip-05 is not valid".to_string());
     }
 
     let local_part = nip05.split('@').next().unwrap();
-    if !local_part.is_ascii() && local_part != "_" && local_part != "-" && local_part != "." {
-        return Ok(false);
+
+    // if local_part != "_" && local_part != name {
+    //     return Err("name does not match nip-05".to_string());
+    // }
+
+    if local_part.is_empty() {
+        return Err("name is empty".to_string());
+    }
+
+    if !local_part.is_ascii() {
+        return Err("name contains invalid characters".to_string());
     }
 
     let domain = nip05.split('@').last().unwrap();
@@ -192,13 +201,22 @@ pub async fn verify_nip05(nip05: String, pubkey: String) -> Result<bool, String>
 
     match json {
         Ok(json) => match json.get("names") {
-            Some(names) => match names.get(local_part) {
-                Some(pubkey_json) => Ok(pubkey_json.as_str().unwrap() == pubkey),
-                None => Ok(false),
+            Some(names) => match names.get(local_part.to_lowercase()) {
+                Some(pubkey_json) => match pubkey_json.as_str() {
+                    Some(pubkey_json) => {
+                        if pubkey_json == pubkey {
+                            Ok(true)
+                        } else {
+                            Err("pubkey does not match".to_string())
+                        }
+                    }
+                    None => Err("pubkey does not match".to_string()),
+                },
+                None => Err("pubkey does not match".to_string()),
             },
-            None => Ok(false),
+            None => Err("domain does not include names".to_string()),
         },
-        Err(_) => Ok(false),
+        Err(_) => Err("domain contains no valid json".to_string()),
     }
 }
 

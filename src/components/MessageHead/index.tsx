@@ -58,7 +58,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
                   />
                   <div className="flex items-center">
                     <span className="text-gray-400" style={{ height: 21 }}>
-                      @{nip05.split("@")[1]}
+                      @{nip05.split("@")[1].toLowerCase()}
                     </span>
                   </div>
                 </div>

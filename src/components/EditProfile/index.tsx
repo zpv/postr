@@ -134,8 +134,17 @@ const EditProfile: React.FC<EditProfileProps> = ({
     e.preventDefault();
     const name = e.target[0].value;
     const about = e.target[1].value;
-    const nip05 = e.target[2].value;
     const picture = e.target[3].value;
+    let nip05 = e.target[2].value;
+
+    // if user enters a nip05 without local_part, add name as local_part
+    if (!nip05.includes("@")) {
+      nip05 = `${name}@${nip05}`;
+      e.target[2].value = nip05;
+    } else if (nip05.includes("@") && nip05.split("@")[0] === "") {
+      nip05 = `${name}@${nip05.split("@")[1]}`;
+      e.target[2].value = nip05;
+    }
     const data = {
       name,
       about,
@@ -154,12 +163,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
         setChangesMade(false);
       });
     } else {
-      invoke("verify_nip05", { nip05, pubkey: user_profile.pubkey }).then(
-        (res: boolean) => {
-          if (!res) {
-            msgRef.current.innerText = "Invalid NIP05";
-            return;
-          }
+      invoke("verify_nip05", { name, nip05, pubkey: user_profile.pubkey })
+        .then((success) => {
           invoke("set_user_info", { ...data }).then((res) => {
             setProfiles((prev: Profiles) => {
               prev[user_profile?.pubkey] = { ...user_profile, ...data };
@@ -169,8 +174,10 @@ const EditProfile: React.FC<EditProfileProps> = ({
             // msgRef.current.innerText = "Profile updated!";
             setChangesMade(false);
           });
-        }
-      );
+        })
+        .catch((err) => {
+          msgRef.current.innerText = "Error: " + err;
+        });
     }
   };
 
@@ -315,6 +322,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
                 onClick={handleShowPrivKey}
                 readOnly
                 ref={privkeyRef}
+                onBlur={() => {
+                  setPrivkey("");
+                }}
               />
               <button
                 onClick={() => {

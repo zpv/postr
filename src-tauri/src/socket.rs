@@ -265,13 +265,26 @@ impl RelaySocket {
                                                     if e.kind == 0 {
                                                         let json = serde_json::from_str::<serde_json::Value>(&e.content).unwrap();
                                                         match json["nip05"].as_str() {
+                                                            Some("") => {
+                                                                debug!("empty nip05 for event: {:?}", id_prefix);
+                                                            },
                                                             Some(nip05) => {
-                                                                let pubkey = e.clone().pubkey;
-                                                                let verified = verify_nip05(nip05.to_string(), pubkey.to_string()).await.unwrap();
-                                                                if !verified {
-                                                                    let mut json = serde_json::from_str::<serde_json::Value>(&e.content).unwrap();
-                                                                    json["nip05"] = serde_json::Value::String("".to_string());
-                                                                    e.content = json.to_string();
+                                                                match json["name"].as_str() {
+                                                                    Some(name) => {
+                                                                        let pubkey = e.clone().pubkey;
+                                                                        match verify_nip05(name.to_string(), nip05.to_string(), pubkey).await {
+                                                                            Ok(_) => {
+                                                                                debug!("verified nip05 for event: {:?}", id_prefix);
+                                                                            },
+                                                                            Err(err) => {
+                                                                                error!("failed to verify nip05 for event: {:?}  error: {:?} for nip05: {:?} with name: {:?}", id_prefix, err, nip05, name);
+                                                                                let mut json = serde_json::from_str::<serde_json::Value>(&e.content).unwrap();
+                                                                                json["nip05"] = serde_json::Value::String("".to_string());
+                                                                                e.content = json.to_string();
+                                                                            }
+                                                                        }
+                                                                    },
+                                                                    None => {}
                                                                 }
                                                             },
                                                             None => {}
