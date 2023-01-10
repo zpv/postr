@@ -123,8 +123,6 @@ pub fn user_profiles(
     db_pool: tauri::State<SqlitePool>,
     relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
 ) -> Result<Vec<UserProfile>, String> {
-
-
     let subscription = Subscription {
         id: "idk".to_string(),
         // create a filter for each pubkey
@@ -166,7 +164,6 @@ pub fn user_profiles(
             })
             .unwrap();
 
-
         let mut user_profiles = vec![];
         while let Some(user) = users.next() {
             user_profiles.push(user.unwrap());
@@ -191,11 +188,7 @@ pub async fn verify_nip05(nip05: String, pubkey: String) -> Result<bool, String>
 
     let domain = nip05.split('@').last().unwrap();
     let url = format!("https://{}/.well-known/nostr.json", domain);
-    info!("json: {:?}", url);
-    // fetch then convert to json
     let json = fetch(url).await;
-
-    info!("json: {:?}", json);
 
     match json {
         Ok(json) => match json.get("names") {
