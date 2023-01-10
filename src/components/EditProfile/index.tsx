@@ -142,15 +142,36 @@ const EditProfile: React.FC<EditProfileProps> = ({
       nip05,
       picture,
     };
-    invoke("set_user_info", { ...data }).then((res) => {
-      setProfiles((prev: Profiles) => {
-        prev[user_profile?.pubkey] = { ...user_profile, ...data };
-        return prev;
+
+    if (!nip05) {
+      invoke("set_user_info", { ...data }).then((res) => {
+        setProfiles((prev: Profiles) => {
+          prev[user_profile?.pubkey] = { ...user_profile, ...data };
+          return prev;
+        });
+        router.push("/profile");
+        // msgRef.current.innerText = "Profile updated!";
+        setChangesMade(false);
       });
-      router.push("/profile");
-      // msgRef.current.innerText = "Profile updated!";
-      setChangesMade(false);
-    });
+    } else {
+      invoke("verify_nip05", { nip05, pubkey: user_profile.pubkey }).then(
+        (res: boolean) => {
+          if (!res) {
+            msgRef.current.innerText = "Invalid NIP05";
+            return;
+          }
+          invoke("set_user_info", { ...data }).then((res) => {
+            setProfiles((prev: Profiles) => {
+              prev[user_profile?.pubkey] = { ...user_profile, ...data };
+              return prev;
+            });
+            router.push("/profile");
+            // msgRef.current.innerText = "Profile updated!";
+            setChangesMade(false);
+          });
+        }
+      );
+    }
   };
 
   const handleShowPrivKey = () => {

@@ -1,6 +1,7 @@
 extern crate tokio;
 extern crate websocket;
 
+use crate::cmd::verify_nip05;
 use crate::error::{Error, Result};
 use crate::event::Event;
 use crate::event::EventResp;
@@ -259,6 +260,24 @@ impl RelaySocket {
                                                 Ok(mut e) => {
                                                     let id_prefix: String = e.id.chars().take(8).collect();
                                                     e.seen_by = vec![relay.clone()];
+
+                                                    // if event is metadata (kind = 0), verify nip05 if present
+                                                    if e.kind == 0 {
+                                                        let json = serde_json::from_str::<serde_json::Value>(&e.content).unwrap();
+                                                        match json["nip05"].as_str() {
+                                                            Some(nip05) => {
+                                                                let pubkey = e.clone().pubkey;
+                                                                let verified = verify_nip05(nip05.to_string(), pubkey.to_string()).await.unwrap();
+                                                                if !verified {
+                                                                    let mut json = serde_json::from_str::<serde_json::Value>(&e.content).unwrap();
+                                                                    json["nip05"] = serde_json::Value::String("".to_string());
+                                                                    e.content = json.to_string();
+                                                                }
+                                                            },
+                                                            None => {}
+                                                        }
+                                                    }
+
                                                     debug!(
                                                             "successfully parsed/validated event: {:?} relay: {:?}",
                                                             id_prefix, &relay
