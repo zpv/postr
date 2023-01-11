@@ -138,13 +138,28 @@ const EditProfile: React.FC<EditProfileProps> = ({
     let nip05 = e.target[2].value;
 
     // if user enters a nip05 without local_part, add name as local_part
-    if (!nip05.includes("@")) {
-      nip05 = `${name}@${nip05}`;
-      e.target[2].value = nip05;
-    } else if (nip05.includes("@") && nip05.split("@")[0] === "") {
-      nip05 = `${name}@${nip05.split("@")[1]}`;
-      e.target[2].value = nip05;
+    if (nip05) {
+      if (
+        !nip05.includes(".") ||                   // no domain
+        nip05[0] === "." ||                       // starts with dot
+        nip05[nip05.length - 1] === "." ||        // ends with dot
+        (nip05.includes("@") && 
+          (!nip05.split("@")[1].includes(".") ||  // no domain after @
+            nip05.split("@")[1][0] === "."))      // starts with dot after @
+      ) {
+        msgRef.current.innerText = "Error: Invalid NIP-05 domain";
+        return;
+      }
+
+      if (!nip05.includes("@")) {
+        nip05 = `${name}@${nip05}`;
+        e.target[2].value = nip05;
+      } else if (nip05.includes("@") && nip05.split("@")[0] === "") {
+        nip05 = `${name}@${nip05.split("@")[1]}`;
+        e.target[2].value = nip05;
+      }
     }
+
     const data = {
       name,
       about,

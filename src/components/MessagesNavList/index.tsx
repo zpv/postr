@@ -94,12 +94,12 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
             // if "_" exists, then create a suggestion with NIP-05 maintainer as the last_message
             if (data.names["_"]) {
               const pubkey = data.names["_"];
-              const nip05 = "@" + domain;
+              // const nip05 = "@" + domain;
               const suggestion = {
                 peer: pubkey,
                 name: "_",
                 last_message: "NIP-05 maintainer", // ugly hack for subtext ### TODO: fix this when last_message is no longer a timestamp lol
-                nip05,
+                // nip05,
               };
               delete data.names["_"];
               setSuggestions([suggestion]);
@@ -136,11 +136,11 @@ const MessagesNavList: React.FC<MessagesNavListProps> = ({
 
             const suggestions = Object.keys(names).map((name) => {
               const pubkey = names[name];
-              const nip05 = name + "@" + domain;
+              // const nip05 = name + "@" + domain;
               return {
                 peer: pubkey,
                 name,
-                nip05,
+                // nip05,
               };
             });
             setSuggestions((prev) => [...prev, ...suggestions]);

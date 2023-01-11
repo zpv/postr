@@ -178,13 +178,13 @@ pub fn user_profiles(
 #[command]
 pub async fn verify_nip05(nip05: String, pubkey: String, name: String) -> Result<bool, String> {
     if nip05.is_empty() || !nip05.contains('@') {
-        return Err("nip-05 is not valid".to_string());
+        return Err("NIP-05 needs to be of the form <user>@<domain>".to_string());
     }
 
     let local_part = nip05.split('@').next().unwrap().to_lowercase();
 
-    if local_part != "_" && local_part != name.to_lowercase() {
-        return Err("name does not match nip-05".to_string());
+    if local_part != "_" && local_part != name.trim().to_lowercase() {
+        return Err("name does not match NIP-05".to_string());
     }
 
     if local_part.is_empty() {
@@ -197,12 +197,18 @@ pub async fn verify_nip05(nip05: String, pubkey: String, name: String) -> Result
 
     let domain = nip05.split('@').last().unwrap();
     let url = format!("https://{}/.well-known/nostr.json", domain);
-    let json = fetch(url).await.unwrap();
+    let json = match fetch(url).await {
+        Ok(json) => json,
+        Err(e) => {
+            error!("error fetching NIP-05 domain: {}", e);
+            return Err("invalid NIP-05 domain".to_string());
+        }
+    };
 
     let pubkey_json = json
         .as_object()
         .and_then(|json| json.get("names"))
-        .and_then(|names| names.get(local_part))
+        .and_then(|names| names.get(local_part.clone()))
         .and_then(|pubkey_json| pubkey_json.as_str());
 
     match pubkey_json {
@@ -210,10 +216,10 @@ pub async fn verify_nip05(nip05: String, pubkey: String, name: String) -> Result
             if p == pubkey {
                 Ok(true)
             } else {
-                Err("pubkey does not match user on domain".to_string())
+                Err(format!("pubkey does not match user \"{}\" on {}", local_part, domain).to_string())
             }
         }
-        None => Err("name not found or invalid json in domain".to_string()),
+        None => Err("name not found or invalid json in NIP-05 domain".to_string()),
     }
 }
 
