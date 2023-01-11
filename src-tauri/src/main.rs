@@ -2,18 +2,18 @@ extern crate tokio;
 extern crate websocket;
 
 use postr::cmd::{
-    get_privkey, get_pubkey, get_relays, send_dm, set_privkey, set_relays, set_user_info,
-    sub_to_msg_events, unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles, fetch, verify_nip05
+    fetch, get_privkey, get_pubkey, get_relays, send_dm, set_privkey, set_relays, set_user_info,
+    sub_to_msg_events, unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles,
+    verify_nip05,
 };
-use postr::{db, __cmd__fetch, __cmd__user_profiles};
 use postr::event::Event;
 use postr::socket::RelayPool;
 use postr::state::{InnerState, PostrState};
 use postr::{
-    __cmd__get_privkey, __cmd__get_pubkey, __cmd__get_relays, __cmd__send_dm, __cmd__set_privkey,
-    __cmd__set_relays, __cmd__set_user_info, __cmd__sub_to_msg_events,
+    __cmd__fetch, __cmd__get_privkey, __cmd__get_pubkey, __cmd__get_relays, __cmd__send_dm,
+    __cmd__set_privkey, __cmd__set_relays, __cmd__set_user_info, __cmd__sub_to_msg_events,
     __cmd__unsub_from_msg_events, __cmd__user_convos, __cmd__user_dms, __cmd__user_profile,
-    __cmd__verify_nip05
+    __cmd__user_profiles, __cmd__verify_nip05, db,
 };
 use rusqlite::OpenFlags;
 use std::sync::atomic::Ordering;
