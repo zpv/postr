@@ -197,26 +197,23 @@ pub async fn verify_nip05(nip05: String, pubkey: String, name: String) -> Result
 
     let domain = nip05.split('@').last().unwrap();
     let url = format!("https://{}/.well-known/nostr.json", domain);
-    let json = fetch(url).await;
+    let json = fetch(url).await.unwrap();
 
-    match json {
-        Ok(json) => match json.get("names") {
-            Some(names) => match names.get(local_part) {
-                Some(pubkey_json) => match pubkey_json.as_str() {
-                    Some(pubkey_json) => {
-                        if pubkey_json == pubkey {
-                            Ok(true)
-                        } else {
-                            Err("pubkey does not match user on domain".to_string())
-                        }
-                    }
-                    None => Err("name found on domain but pubkey is not a string".to_string()),
-                },
-                None => Err("name does not exist on domain".to_string()),
-            },
-            None => Err("domain does not include names".to_string()),
-        },
-        Err(_) => Err("domain contains no valid json".to_string()),
+    let pubkey_json = json
+        .as_object()
+        .and_then(|json| json.get("names"))
+        .and_then(|names| names.get(local_part))
+        .and_then(|pubkey_json| pubkey_json.as_str());
+
+    match pubkey_json {
+        Some(p) => {
+            if p == pubkey {
+                Ok(true)
+            } else {
+                Err("pubkey does not match user on domain".to_string())
+            }
+        }
+        None => Err("name not found or invalid json in domain".to_string()),
     }
 }
 
