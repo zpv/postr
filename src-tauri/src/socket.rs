@@ -272,7 +272,7 @@ impl RelaySocket {
                                                                 match json["name"].as_str() {
                                                                     Some(name) => {
                                                                         let pubkey = e.clone().pubkey;
-                                                                        match verify_nip05(name.to_string(), nip05.to_string(), pubkey).await {
+                                                                        match verify_nip05(nip05.to_string(), pubkey, name.to_string()).await {
                                                                             Ok(_) => {
                                                                                 debug!("verified nip05 for event: {:?}", id_prefix);
                                                                             },

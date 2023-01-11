@@ -176,16 +176,16 @@ pub fn user_profiles(
 }
 
 #[command]
-pub async fn verify_nip05(name: String, nip05: String, pubkey: String) -> Result<bool, String> {
+pub async fn verify_nip05(nip05: String, pubkey: String, name: String) -> Result<bool, String> {
     if nip05.is_empty() || !nip05.contains('@') {
         return Err("nip-05 is not valid".to_string());
     }
 
-    let local_part = nip05.split('@').next().unwrap();
+    let local_part = nip05.split('@').next().unwrap().to_lowercase();
 
-    // if local_part != "_" && local_part != name {
-    //     return Err("name does not match nip-05".to_string());
-    // }
+    if local_part != "_" && local_part != name.to_lowercase() {
+        return Err("name does not match nip-05".to_string());
+    }
 
     if local_part.is_empty() {
         return Err("name is empty".to_string());
@@ -201,18 +201,18 @@ pub async fn verify_nip05(name: String, nip05: String, pubkey: String) -> Result
 
     match json {
         Ok(json) => match json.get("names") {
-            Some(names) => match names.get(local_part.to_lowercase()) {
+            Some(names) => match names.get(local_part) {
                 Some(pubkey_json) => match pubkey_json.as_str() {
                     Some(pubkey_json) => {
                         if pubkey_json == pubkey {
                             Ok(true)
                         } else {
-                            Err("pubkey does not match".to_string())
+                            Err("pubkey does not match user on domain".to_string())
                         }
                     }
-                    None => Err("pubkey does not match".to_string()),
+                    None => Err("name found on domain but pubkey is not a string".to_string()),
                 },
-                None => Err("pubkey does not match".to_string()),
+                None => Err("name does not exist on domain".to_string()),
             },
             None => Err("domain does not include names".to_string()),
         },

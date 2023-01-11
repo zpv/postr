@@ -163,7 +163,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
         setChangesMade(false);
       });
     } else {
-      invoke("verify_nip05", { name, nip05, pubkey: user_profile.pubkey })
+      invoke("verify_nip05", { nip05, pubkey: user_profile.pubkey, name })
         .then((success) => {
           invoke("set_user_info", { ...data }).then((res) => {
             setProfiles((prev: Profiles) => {
