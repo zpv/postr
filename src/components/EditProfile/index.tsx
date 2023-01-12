@@ -134,23 +134,66 @@ const EditProfile: React.FC<EditProfileProps> = ({
     e.preventDefault();
     const name = e.target[0].value;
     const about = e.target[1].value;
-    const nip05 = e.target[2].value;
     const picture = e.target[3].value;
+    let nip05 = e.target[2].value;
+
+    // if user enters a nip05 without local_part, add name as local_part
+    if (nip05) {
+      if (
+        !nip05.includes(".") ||                   // no domain
+        nip05[0] === "." ||                       // starts with dot
+        nip05[nip05.length - 1] === "." ||        // ends with dot
+        (nip05.includes("@") && 
+          (!nip05.split("@")[1].includes(".") ||  // no domain after @
+            nip05.split("@")[1][0] === "."))      // starts with dot after @
+      ) {
+        msgRef.current.innerText = "Error: Invalid NIP-05 domain";
+        return;
+      }
+
+      if (!nip05.includes("@")) {
+        nip05 = `${name}@${nip05}`;
+        e.target[2].value = nip05;
+      } else if (nip05.includes("@") && nip05.split("@")[0] === "") {
+        nip05 = `${name}@${nip05.split("@")[1]}`;
+        e.target[2].value = nip05;
+      }
+    }
+
     const data = {
       name,
       about,
       nip05,
       picture,
     };
-    invoke("set_user_info", { ...data }).then((res) => {
-      setProfiles((prev: Profiles) => {
-        prev[user_profile?.pubkey] = { ...user_profile, ...data };
-        return prev;
+
+    if (!nip05) {
+      invoke("set_user_info", { ...data }).then((res) => {
+        setProfiles((prev: Profiles) => {
+          prev[user_profile?.pubkey] = { ...user_profile, ...data };
+          return prev;
+        });
+        router.push("/profile");
+        // msgRef.current.innerText = "Profile updated!";
+        setChangesMade(false);
       });
-      router.push("/profile");
-      // msgRef.current.innerText = "Profile updated!";
-      setChangesMade(false);
-    });
+    } else {
+      invoke("verify_nip05", { nip05, pubkey: user_profile.pubkey, name })
+        .then((success) => {
+          invoke("set_user_info", { ...data }).then((res) => {
+            setProfiles((prev: Profiles) => {
+              prev[user_profile?.pubkey] = { ...user_profile, ...data };
+              return prev;
+            });
+            router.push("/profile");
+            // msgRef.current.innerText = "Profile updated!";
+            setChangesMade(false);
+          });
+        })
+        .catch((err) => {
+          msgRef.current.innerText = "Error: " + err;
+        });
+    }
   };
 
   const handleShowPrivKey = () => {
@@ -294,6 +337,9 @@ const EditProfile: React.FC<EditProfileProps> = ({
                 onClick={handleShowPrivKey}
                 readOnly
                 ref={privkeyRef}
+                onBlur={() => {
+                  setPrivkey("");
+                }}
               />
               <button
                 onClick={() => {

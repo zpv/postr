@@ -57,7 +57,7 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
             onClick={copyToClipboard}
           >
             {isHovering &&
-              ((nip05 && "@" + nip05?.split("@")[1]) || toNpub(pubkey))}
+              ((nip05 && "@" + nip05?.split("@")[1].toLowerCase()) || toNpub(pubkey))}
             {!isHovering && display_name}
           </h1>
           <Link href="/profile">

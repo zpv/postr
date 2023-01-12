@@ -23,7 +23,7 @@ const MessagesNavListItem: React.FC<MessagesNavListItemProps> = ({
   const display: string = name || (npub && npub_truncated) || "";
 
   const hover_text: string =
-    (nip05 && "@" + nip05?.split("@")[1]) || npub_truncated;
+    (nip05 && "@" + nip05?.split("@")[1].toLowerCase()) || npub_truncated;
 
   const last_message_formatted = (typeof last_message === "number" && getFormattedMsgRecvTime(last_message)) || last_message;
 

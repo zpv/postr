@@ -18,7 +18,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
     <>
       <div
         className={
-          "cursor-pointer border-indigo-600 transition duration-100" +
+          "cursor-pointer border-indigo-600 transition duration-100 " +
           (name === tab
             ? " border-r-2 bg-neutral-900"
             : " hover:bg-neutral-900 active:bg-opacity-70")

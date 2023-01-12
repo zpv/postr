@@ -14,12 +14,12 @@ use crate::state::PostrState;
 use crate::subscription::Req;
 use crate::subscription::ReqFilter;
 use crate::subscription::Subscription;
-use reqwest;
 use nostr_rust::events::EventPrepare;
 use nostr_rust::nips::nip4::decrypt;
 use nostr_rust::nips::nip4::encrypt;
 use nostr_rust::utils::get_timestamp;
 use nostr_rust::Identity;
+use reqwest;
 use rusqlite::named_params;
 use rusqlite::params;
 use rusqlite::types::Value;
@@ -123,8 +123,6 @@ pub fn user_profiles(
     db_pool: tauri::State<SqlitePool>,
     relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
 ) -> Result<Vec<UserProfile>, String> {
-
-
     let subscription = Subscription {
         id: "idk".to_string(),
         // create a filter for each pubkey
@@ -166,14 +164,62 @@ pub fn user_profiles(
             })
             .unwrap();
 
-        let mut user_profiles = Vec::new();
+        let mut user_profiles = vec![];
         while let Some(user) = users.next() {
             user_profiles.push(user.unwrap());
         }
 
         Ok(user_profiles)
     } else {
-        Err ("no user".to_string())
+        Err("no user".to_string())
+    }
+}
+
+#[command]
+pub async fn verify_nip05(nip05: String, pubkey: String, name: String) -> Result<bool, String> {
+    if nip05.is_empty() || !nip05.contains('@') {
+        return Err("NIP-05 needs to be of the form <user>@<domain>".to_string());
+    }
+
+    let local_part = nip05.split('@').next().unwrap().to_lowercase();
+
+    if local_part != "_" && local_part != name.trim().to_lowercase() {
+        return Err("name does not match NIP-05".to_string());
+    }
+
+    if local_part.is_empty() {
+        return Err("name is empty".to_string());
+    }
+
+    if !local_part.is_ascii() {
+        return Err("name contains invalid characters".to_string());
+    }
+
+    let domain = nip05.split('@').last().unwrap();
+    let url = format!("https://{}/.well-known/nostr.json", domain);
+    let json = match fetch(url).await {
+        Ok(json) => json,
+        Err(e) => {
+            error!("error fetching NIP-05 domain: {}", e);
+            return Err("invalid NIP-05 domain".to_string());
+        }
+    };
+
+    let pubkey_json = json
+        .as_object()
+        .and_then(|json| json.get("names"))
+        .and_then(|names| names.get(local_part.clone()))
+        .and_then(|pubkey_json| pubkey_json.as_str());
+
+    match pubkey_json {
+        Some(p) => {
+            if p == pubkey {
+                Ok(true)
+            } else {
+                Err(format!("pubkey does not match user \"{}\" on {}", local_part, domain).to_string())
+            }
+        }
+        None => Err("name not found or invalid json in NIP-05 domain".to_string()),
     }
 }
 
@@ -309,8 +355,7 @@ pub fn user_dms(
         Err(e) => {
             return Err(format!("Invalid pubkey: {}", e));
         }
-    };    
-
+    };
 
     let subscription = Subscription {
         id: "idk".to_string(),
@@ -371,7 +416,6 @@ pub fn user_dms(
                 let msg: String = row.get(0)?;
                 let event: Event = serde_json::from_str(&msg).unwrap();
                 let created_at: i64 = row.get(1)?;
-                
 
                 let decrypted_message =
                     match decrypt(&identity.secret_key, &x_pub_key, &event.content) {
@@ -516,12 +560,14 @@ pub async fn sub_to_msg_events(
 }
 
 #[command]
-pub async fn fetch(
-    url: String,
-) -> Result<serde_json::Value, String> {
+pub async fn fetch(url: String) -> Result<serde_json::Value, String> {
     // call map_err to convert the error to a string
     let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
-    let json = resp.json::<serde_json::Value>().await.map_err(|e| e.to_string())?;
+    let json = resp
+        .json::<serde_json::Value>()
+        .await
+        .map_err(|e| e.to_string())?;
+
     Ok(json)
 }
 

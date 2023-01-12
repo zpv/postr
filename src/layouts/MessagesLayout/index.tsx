@@ -232,6 +232,7 @@ const MessagesLayout: React.FC<MessagesLayoutProps> = ({
 
   useEffect(() => {
     refreshMessages();
+    setMessage("");
 
     if (peer !== "") {
       setShowUserInfo(false);
