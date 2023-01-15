@@ -90,6 +90,8 @@ fn main() {
         // validated events that need to be persisted are sent to the
         // database on via this channel.
         let (event_tx, event_rx) = mpsc::channel::<Event>(4096);
+        // establish a channel for shutting down threads.
+        let (shutdown_tx, _) = broadcast::channel::<()>(1);
         // establish a channel for letting all threads now about a
         // requested server shutdown.
         let (invoke_shutdown, shutdown_listen) = broadcast::channel::<()>(1);
@@ -146,6 +148,7 @@ fn main() {
             .manage(pool)
             .manage(relay_pool)
             .manage(bcast_tx)
+            .manage(shutdown_tx)
             .manage(PostrState(RwLock::new(InnerState {
                 privkey: "".to_string(),
                 pubkey: "".to_string(),
