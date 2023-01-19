@@ -472,10 +472,12 @@ pub async fn sub_to_msg_events(
     bcast_tx: tauri::State<'_, broadcast::Sender<Event>>,
     state: tauri::State<'_, PostrState>,
     app_handle: tauri::AppHandle,
+    shutdown_msg_sub_tx: tauri::State<'_, broadcast::Sender<()>>,
 ) -> Result<(), ()> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
     let mut bcast_rx = bcast_tx.subscribe();
+    let mut shutdown_msg_sub_rx = shutdown_msg_sub_tx.subscribe();
 
     let sub_filter = Subscription {
         id: "dms".to_string(),
@@ -506,53 +508,55 @@ pub async fn sub_to_msg_events(
         ],
     };
 
-    while let Ok(event) = &bcast_rx.recv().await {
-        // debug!("event: {:?}", event);
+    loop {
+        tokio::select! {
+            _ = shutdown_msg_sub_rx.recv() => {
+                info!("shutting down subscription");
+                break;
+            }
+            Ok(event) = bcast_rx.recv() => {
+                // debug!("event: {:?}", event);
 
-        // if event string is "stop subscription", then stop the subscription
-        if event.content == "stop subscription" {
-            // debug!("stopping subscription");
-            break;
-        }
-
-        if sub_filter.interested_in_event(event) {
-            // peer is the other user in the convo. if author is us, then peer is the tag value
-            let peer = if event.pubkey == identity.public_key_str {
-                event.tags.get(0).unwrap().get(1).unwrap().clone()
-            } else {
-                event.pubkey.clone()
-            };
-
-            let x_pub_key = secp256k1::XOnlyPublicKey::from_str(&peer).unwrap();
-
-            let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
-            {
-                Ok(message) => message,
-                Err(e) => {
-                    error!("decryption error: {}", e);
-                    return Err(());
+                if sub_filter.interested_in_event(&event) {
+                    // peer is the other user in the convo. if author is us, then peer is the tag value
+                    let peer = if event.pubkey == identity.public_key_str {
+                        event.tags.get(0).unwrap().get(1).unwrap().clone()
+                    } else {
+                        event.pubkey.clone()
+                    };
+        
+                    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(&peer).unwrap();
+        
+                    let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
+                    {
+                        Ok(message) => message,
+                        Err(e) => {
+                            error!("decryption error: {}", e);
+                            return Err(());
+                        }
+                    };
+        
+                    // deserialize the message as event
+                    // debug!("event: {:?}", decrypted_message);
+                    let recipient = if event.pubkey == identity.public_key_str {
+                        x_pub_key.to_string()
+                    } else {
+                        identity.public_key_str.clone()
+                    };
+        
+                    let private_message = PrivateMessageWithRecipient {
+                        id: event.id.clone(),
+                        author: event.pubkey.clone(),
+                        content: decrypted_message,
+                        recipient,
+                        timestamp: event.created_at as u64,
+                    };
+        
+                    app_handle.emit_all("dm", private_message).unwrap();
+        
+                    // debug!("matches");
                 }
-            };
-
-            // deserialize the message as event
-            // debug!("event: {:?}", decrypted_message);
-            let recipient = if event.pubkey == identity.public_key_str {
-                x_pub_key.to_string()
-            } else {
-                identity.public_key_str.clone()
-            };
-
-            let private_message = PrivateMessageWithRecipient {
-                id: event.id.clone(),
-                author: event.pubkey.clone(),
-                content: decrypted_message,
-                recipient,
-                timestamp: event.created_at as u64,
-            };
-
-            app_handle.emit_all("dm", private_message).unwrap();
-
-            // debug!("matches");
+            }
         }
     }
 
@@ -573,14 +577,9 @@ pub async fn fetch(url: String) -> Result<serde_json::Value, String> {
 
 #[command]
 pub async fn unsub_from_msg_events(
-    bcast_tx: tauri::State<'_, broadcast::Sender<Event>>,
+    shutdown_msg_sub_tx: tauri::State<'_, broadcast::Sender<()>>,
 ) -> Result<(), ()> {
-    bcast_tx
-        .send(Event {
-            content: "stop subscription".to_string(),
-            ..Default::default()
-        })
-        .unwrap();
+    shutdown_msg_sub_tx.send(()).unwrap();
     Ok(())
 }
 

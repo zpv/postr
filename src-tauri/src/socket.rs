@@ -228,13 +228,13 @@ impl RelaySocket {
                         // send tx message to relay
                         send_msg = rx.recv() => {
                             if let Ok(msg) = send_msg {
-                                info!("Sending message to {:?}: {:?}", relay, msg);
+                                // info!("Sending message to {:?}: {:?}", relay, msg);
                                 let msg = Message::Text(msg.to_string());
                                 write.send(msg).await.unwrap();
                             }
                         }
                         msg = read.next() => {
-                            debug!("Received message from {}: {:?}", relay, msg);
+                            // debug!("Received message from {}: {:?}", relay, msg);
                             let msg = match msg {
                                 Some(Ok(msg)) => msg,
                                 Some(Err(e)) => {
