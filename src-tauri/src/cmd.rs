@@ -472,12 +472,12 @@ pub async fn sub_to_msg_events(
     bcast_tx: tauri::State<'_, broadcast::Sender<Event>>,
     state: tauri::State<'_, PostrState>,
     app_handle: tauri::AppHandle,
-    shutdown_tx: tauri::State<'_, broadcast::Sender<()>>,
+    shutdown_msg_sub_tx: tauri::State<'_, broadcast::Sender<()>>,
 ) -> Result<(), ()> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
     let mut bcast_rx = bcast_tx.subscribe();
-    let mut shutdown_rx = shutdown_tx.subscribe();
+    let mut shutdown_msg_sub_rx = shutdown_msg_sub_tx.subscribe();
 
     let sub_filter = Subscription {
         id: "dms".to_string(),
@@ -510,7 +510,7 @@ pub async fn sub_to_msg_events(
 
     loop {
         tokio::select! {
-            _ = shutdown_rx.recv() => {
+            _ = shutdown_msg_sub_rx.recv() => {
                 info!("shutting down subscription");
                 break;
             }
@@ -577,9 +577,9 @@ pub async fn fetch(url: String) -> Result<serde_json::Value, String> {
 
 #[command]
 pub async fn unsub_from_msg_events(
-    shutdown_tx: tauri::State<'_, broadcast::Sender<()>>,
+    shutdown_msg_sub_tx: tauri::State<'_, broadcast::Sender<()>>,
 ) -> Result<(), ()> {
-    shutdown_tx.send(()).unwrap();
+    shutdown_msg_sub_tx.send(()).unwrap();
     Ok(())
 }
 
