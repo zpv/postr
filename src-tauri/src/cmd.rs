@@ -19,6 +19,7 @@ use nostr_rust::nips::nip4::decrypt;
 use nostr_rust::nips::nip4::encrypt;
 use nostr_rust::utils::get_timestamp;
 use nostr_rust::Identity;
+use reqwest;
 use rusqlite::named_params;
 use rusqlite::params;
 use rusqlite::types::Value;
@@ -46,11 +47,22 @@ pub fn set_privkey(privkey: &str, state: tauri::State<PostrState>) -> Result<(),
     let mut state = state.0.write().unwrap();
 
     // verify privkey is valid
-    let identity = Identity::from_str(privkey).unwrap();
+    let identity = match Identity::from_str(privkey) {
+        Ok(identity) => identity,
+        Err(e) => {
+            return Err(format!("Invalid private key: {}", e));
+        }
+    };
     state.privkey = privkey.to_string();
     state.pubkey = identity.public_key_str;
 
     Ok(())
+}
+
+#[command]
+pub fn get_privkey(state: tauri::State<PostrState>) -> Result<String, String> {
+    let state = state.0.read().unwrap();
+    Ok(state.privkey.clone())
 }
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -111,8 +123,6 @@ pub fn user_profiles(
     db_pool: tauri::State<SqlitePool>,
     relay_pool: tauri::State<Arc<Mutex<RelayPool>>>,
 ) -> Result<Vec<UserProfile>, String> {
-
-
     let subscription = Subscription {
         id: "idk".to_string(),
         // create a filter for each pubkey
@@ -154,14 +164,62 @@ pub fn user_profiles(
             })
             .unwrap();
 
-        let mut user_profiles = Vec::new();
+        let mut user_profiles = vec![];
         while let Some(user) = users.next() {
             user_profiles.push(user.unwrap());
         }
 
         Ok(user_profiles)
     } else {
-        Err ("no user".to_string())
+        Err("no user".to_string())
+    }
+}
+
+#[command]
+pub async fn verify_nip05(nip05: String, pubkey: String, name: String) -> Result<bool, String> {
+    if nip05.is_empty() || !nip05.contains('@') {
+        return Err("NIP-05 needs to be of the form <user>@<domain>".to_string());
+    }
+
+    let local_part = nip05.split('@').next().unwrap().to_lowercase();
+
+    if local_part != "_" && local_part != name.trim().to_lowercase() {
+        return Err("name does not match NIP-05".to_string());
+    }
+
+    if local_part.is_empty() {
+        return Err("name is empty".to_string());
+    }
+
+    if !local_part.is_ascii() {
+        return Err("name contains invalid characters".to_string());
+    }
+
+    let domain = nip05.split('@').last().unwrap();
+    let url = format!("https://{}/.well-known/nostr.json", domain);
+    let json = match fetch(url).await {
+        Ok(json) => json,
+        Err(e) => {
+            error!("error fetching NIP-05 domain: {}", e);
+            return Err("invalid NIP-05 domain".to_string());
+        }
+    };
+
+    let pubkey_json = json
+        .as_object()
+        .and_then(|json| json.get("names"))
+        .and_then(|names| names.get(local_part.clone()))
+        .and_then(|pubkey_json| pubkey_json.as_str());
+
+    match pubkey_json {
+        Some(p) => {
+            if p == pubkey {
+                Ok(true)
+            } else {
+                Err(format!("pubkey does not match user \"{}\" on {}", local_part, domain).to_string())
+            }
+        }
+        None => Err("name not found or invalid json in NIP-05 domain".to_string()),
     }
 }
 
@@ -292,7 +350,12 @@ pub fn user_dms(
 ) -> Result<Vec<PrivateMessageWithRecipient>, String> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
-    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
+    let x_pub_key: secp256k1::XOnlyPublicKey = match secp256k1::XOnlyPublicKey::from_str(peer) {
+        Ok(x) => x,
+        Err(e) => {
+            return Err(format!("Invalid pubkey: {}", e));
+        }
+    };
 
     let subscription = Subscription {
         id: "idk".to_string(),
@@ -353,7 +416,6 @@ pub fn user_dms(
                 let msg: String = row.get(0)?;
                 let event: Event = serde_json::from_str(&msg).unwrap();
                 let created_at: i64 = row.get(1)?;
-                
 
                 let decrypted_message =
                     match decrypt(&identity.secret_key, &x_pub_key, &event.content) {
@@ -410,10 +472,12 @@ pub async fn sub_to_msg_events(
     bcast_tx: tauri::State<'_, broadcast::Sender<Event>>,
     state: tauri::State<'_, PostrState>,
     app_handle: tauri::AppHandle,
+    shutdown_msg_sub_tx: tauri::State<'_, broadcast::Sender<()>>,
 ) -> Result<(), ()> {
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
     let mut bcast_rx = bcast_tx.subscribe();
+    let mut shutdown_msg_sub_rx = shutdown_msg_sub_tx.subscribe();
 
     let sub_filter = Subscription {
         id: "dms".to_string(),
@@ -444,53 +508,55 @@ pub async fn sub_to_msg_events(
         ],
     };
 
-    while let Ok(event) = &bcast_rx.recv().await {
-        // debug!("event: {:?}", event);
+    loop {
+        tokio::select! {
+            _ = shutdown_msg_sub_rx.recv() => {
+                info!("shutting down subscription");
+                break;
+            }
+            Ok(event) = bcast_rx.recv() => {
+                // debug!("event: {:?}", event);
 
-        // if event string is "stop subscription", then stop the subscription
-        if event.content == "stop subscription" {
-            // debug!("stopping subscription");
-            break;
-        }
-
-        if sub_filter.interested_in_event(event) {
-            // peer is the other user in the convo. if author is us, then peer is the tag value
-            let peer = if event.pubkey == identity.public_key_str {
-                event.tags.get(0).unwrap().get(1).unwrap().clone()
-            } else {
-                event.pubkey.clone()
-            };
-
-            let x_pub_key = secp256k1::XOnlyPublicKey::from_str(&peer).unwrap();
-
-            let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
-            {
-                Ok(message) => message,
-                Err(e) => {
-                    error!("decryption error: {}", e);
-                    return Err(());
+                if sub_filter.interested_in_event(&event) {
+                    // peer is the other user in the convo. if author is us, then peer is the tag value
+                    let peer = if event.pubkey == identity.public_key_str {
+                        event.tags.get(0).unwrap().get(1).unwrap().clone()
+                    } else {
+                        event.pubkey.clone()
+                    };
+        
+                    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(&peer).unwrap();
+        
+                    let decrypted_message = match decrypt(&identity.secret_key, &x_pub_key, &event.content)
+                    {
+                        Ok(message) => message,
+                        Err(e) => {
+                            error!("decryption error: {}", e);
+                            return Err(());
+                        }
+                    };
+        
+                    // deserialize the message as event
+                    // debug!("event: {:?}", decrypted_message);
+                    let recipient = if event.pubkey == identity.public_key_str {
+                        x_pub_key.to_string()
+                    } else {
+                        identity.public_key_str.clone()
+                    };
+        
+                    let private_message = PrivateMessageWithRecipient {
+                        id: event.id.clone(),
+                        author: event.pubkey.clone(),
+                        content: decrypted_message,
+                        recipient,
+                        timestamp: event.created_at as u64,
+                    };
+        
+                    app_handle.emit_all("dm", private_message).unwrap();
+        
+                    // debug!("matches");
                 }
-            };
-
-            // deserialize the message as event
-            // debug!("event: {:?}", decrypted_message);
-            let recipient = if event.pubkey == identity.public_key_str {
-                x_pub_key.to_string()
-            } else {
-                identity.public_key_str.clone()
-            };
-
-            let private_message = PrivateMessageWithRecipient {
-                id: event.id.clone(),
-                author: event.pubkey.clone(),
-                content: decrypted_message,
-                recipient,
-                timestamp: event.created_at as u64,
-            };
-
-            app_handle.emit_all("dm", private_message).unwrap();
-
-            // debug!("matches");
+            }
         }
     }
 
@@ -498,15 +564,22 @@ pub async fn sub_to_msg_events(
 }
 
 #[command]
+pub async fn fetch(url: String) -> Result<serde_json::Value, String> {
+    // call map_err to convert the error to a string
+    let resp = reqwest::get(&url).await.map_err(|e| e.to_string())?;
+    let json = resp
+        .json::<serde_json::Value>()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(json)
+}
+
+#[command]
 pub async fn unsub_from_msg_events(
-    bcast_tx: tauri::State<'_, broadcast::Sender<Event>>,
+    shutdown_msg_sub_tx: tauri::State<'_, broadcast::Sender<()>>,
 ) -> Result<(), ()> {
-    bcast_tx
-        .send(Event {
-            content: "stop subscription".to_string(),
-            ..Default::default()
-        })
-        .unwrap();
+    shutdown_msg_sub_tx.send(()).unwrap();
     Ok(())
 }
 
@@ -520,7 +593,13 @@ pub fn send_dm(
     let privkey = state.0.read().unwrap().privkey.clone();
     let identity = Identity::from_str(&privkey).unwrap();
 
-    let x_pub_key = secp256k1::XOnlyPublicKey::from_str(peer).unwrap();
+    let x_pub_key = match secp256k1::XOnlyPublicKey::from_str(peer) {
+        Ok(x_pub_key) => x_pub_key,
+        Err(e) => {
+            error!("send_dm: Invalid pubkey: {}", e);
+            return Err(());
+        }
+    };
     let encrypted_message = encrypt(&identity.secret_key, &x_pub_key, message).unwrap();
 
     let event = EventPrepare {

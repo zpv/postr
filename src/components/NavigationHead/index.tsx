@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useState } from "react";
-import { toNpub } from "../../helpers/pubkey";
+import { toNpub } from "../../helpers/nip19";
 
 interface NavigationHeadProps {
   picture?: string;
@@ -57,7 +57,7 @@ const NavigationHead: React.FC<NavigationHeadProps> = ({
             onClick={copyToClipboard}
           >
             {isHovering &&
-              ((nip05 && "@" + nip05?.split("@")[1]) || toNpub(pubkey))}
+              ((nip05 && "@" + nip05?.split("@")[1].toLowerCase()) || toNpub(pubkey))}
             {!isHovering && display_name}
           </h1>
           <Link href="/profile">

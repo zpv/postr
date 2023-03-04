@@ -1,7 +1,7 @@
 import info from "../../assets/info.png";
 import verifIcon from "../../assets/verif.png";
 import { SetBooleanState } from "../../lib/types";
-import { toNpub } from "../../helpers/pubkey";
+import { toNpub } from "../../helpers/nip19";
 
 interface MessageHeadProps {
   name?: string;
@@ -58,7 +58,7 @@ const MessageHead: React.FC<MessageHeadProps> = ({
                   />
                   <div className="flex items-center">
                     <span className="text-gray-400" style={{ height: 21 }}>
-                      @{nip05.split("@")[1]}
+                      @{nip05.split("@")[1].toLowerCase()}
                     </span>
                   </div>
                 </div>
