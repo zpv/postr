@@ -1,4 +1,4 @@
-import { StrictMode, useState } from "react";
+import { useState } from "react";
 import MessagesLayout from "../../layouts/MessagesLayout";
 import { invoke } from "@tauri-apps/api/tauri";
 import Layout from "../../layouts/Layout";
@@ -46,27 +46,25 @@ function Messages({
   }
 
   return (
-    <StrictMode>
-      <div className="h-full w-full overflow-hidden bg-neutral-900">
-        <div className="grid h-full grid-cols-[75px_75px_1fr] xs:grid-cols-[75px_240px_1fr] sm:grid-cols-[180px_240px_1fr]">
-          <Layout {...{ user_profile }} {...{ tab }}>
-            <MessagesLayout
-              {...{
-                user,
-                profiles,
-                setProfiles,
-                peer,
-                setPeer,
-                lastRefresh,
-                setLastRefresh,
-                message_list,
-                setMessageList,
-              }}
-            />
-          </Layout>
-        </div>
+    <div className="h-full w-full overflow-hidden bg-neutral-900">
+      <div className="grid h-full grid-cols-[75px_75px_1fr] xs:grid-cols-[75px_240px_1fr] sm:grid-cols-[180px_240px_1fr]">
+        <Layout {...{ user_profile }} {...{ tab }}>
+          <MessagesLayout
+            {...{
+              user,
+              profiles,
+              setProfiles,
+              peer,
+              setPeer,
+              lastRefresh,
+              setLastRefresh,
+              message_list,
+              setMessageList,
+            }}
+          />
+        </Layout>
       </div>
-    </StrictMode>
+    </div>
   );
 }
 

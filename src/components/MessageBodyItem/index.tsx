@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { getTime } from "../../helpers/timeHelpers";
 
 interface MessageBodyItemProps {
@@ -18,9 +17,10 @@ const MessageBodyItem: React.FC<MessageBodyItemProps> = ({
   rounded_bottom,
   rounded_top,
 }) => {
-  const MAX_LENGTH: number = 200;
-  const TRIM_LENGTH: number = 50;
+  if (content === "") return <></>;
+
   const isUser: boolean = author === user;
+
   const userStyling: string =
     "bg-indigo-800 rounded-bl-2xl rounded-tl-2xl" +
     ((rounded_bottom && " rounded-br-2xl") || "") +
@@ -29,10 +29,8 @@ const MessageBodyItem: React.FC<MessageBodyItemProps> = ({
     "bg-neutral-800 rounded-br-2xl rounded-tr-2xl" +
     ((rounded_bottom && " rounded-bl-2xl") || "") +
     ((rounded_top && " rounded-tl-2xl") || "");
-  const timeStr: string = getTime(timestamp);
-  const [expanded, setExpanded] = useState(false);
 
-  if (content === "") return <></>;
+  const timeStr: string = getTime(timestamp);
 
   return (
     <>
@@ -50,20 +48,7 @@ const MessageBodyItem: React.FC<MessageBodyItemProps> = ({
             (isUser ? userStyling : authorStyling)
           }
         >
-          {(content.length <= MAX_LENGTH || expanded) && content}
-          {content.length > MAX_LENGTH && !expanded && (
-            <>
-              {content.slice(0, MAX_LENGTH - TRIM_LENGTH)}...
-              <span
-                className="cursor-pointer text-indigo-300 underline hover:no-underline"
-                onClick={() => setExpanded(true)}
-              >
-                <br />
-                Expand {content.length - MAX_LENGTH + TRIM_LENGTH} more
-                characters
-              </span>
-            </>
-          )}
+          {content}
         </p>
         {!isUser && (
           <p className="invisible my-auto mr-5 text-center text-xs text-neutral-400 group-hover:visible">

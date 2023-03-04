@@ -33,6 +33,7 @@ const ConfigRelaysModal: React.FC<PrivKeyModalProps> = ({
         .filter((r: string) => r.length > 0)
         .map((r: string) => r.replace(" ", "-"));
     }
+    console.log(new_relays);
     invoke("set_relays", {
       relays: new_relays,
     }).then(() => {

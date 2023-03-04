@@ -2,26 +2,25 @@ extern crate tokio;
 extern crate websocket;
 
 use postr::cmd::{
-    fetch, get_privkey, get_pubkey, get_relays, send_dm, set_privkey, set_relays, set_user_info,
-    sub_to_msg_events, unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles,
-    verify_nip05,
+    get_pubkey, get_relays, send_dm, set_privkey, set_relays, set_user_info, sub_to_msg_events,
+    unsub_from_msg_events, user_convos, user_dms, user_profile, user_profiles,
 };
+use postr::db;
 use postr::event::Event;
 use postr::socket::RelayPool;
 use postr::state::{InnerState, PostrState};
 use postr::{
-    __cmd__fetch, __cmd__get_privkey, __cmd__get_pubkey, __cmd__get_relays, __cmd__send_dm,
-    __cmd__set_privkey, __cmd__set_relays, __cmd__set_user_info, __cmd__sub_to_msg_events,
-    __cmd__unsub_from_msg_events, __cmd__user_convos, __cmd__user_dms, __cmd__user_profile,
-    __cmd__user_profiles, __cmd__verify_nip05, db,
+    __cmd__get_pubkey, __cmd__get_relays, __cmd__send_dm, __cmd__set_privkey, __cmd__set_relays,
+    __cmd__set_user_info, __cmd__sub_to_msg_events, __cmd__unsub_from_msg_events,
+    __cmd__user_convos, __cmd__user_dms, __cmd__user_profile, __cmd__user_profiles,
 };
 use rusqlite::OpenFlags;
 use std::sync::atomic::Ordering;
 
-use std::env;
 use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+use std::{env};
 
 use std::sync::RwLock;
 use tokio::runtime::Builder;
@@ -65,9 +64,8 @@ fn main() {
         .enable_all()
         .thread_name_fn(|| {
             // give each thread a unique numeric name
-            static ATOMIC_ID: std::sync::atomic::AtomicUsize =
-                std::sync::atomic::AtomicUsize::new(0);
-            let id = ATOMIC_ID.fetch_add(1, Ordering::SeqCst);
+            static ATOMIC_ID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+            let id = ATOMIC_ID.fetch_add(1,Ordering::SeqCst);
             format!("tokio-ws-{}", id)
         })
         // limit concurrent SQLite blocking threads
@@ -90,8 +88,6 @@ fn main() {
         // validated events that need to be persisted are sent to the
         // database on via this channel.
         let (event_tx, event_rx) = mpsc::channel::<Event>(4096);
-        // establish a channel for shutting down threads.
-        let (shutdown_msg_sub_tx, _) = broadcast::channel::<()>(1);
         // establish a channel for letting all threads now about a
         // requested server shutdown.
         let (invoke_shutdown, shutdown_listen) = broadcast::channel::<()>(1);
@@ -126,6 +122,7 @@ fn main() {
             "wss://nostr.zebedee.cloud",
             "wss://relay.nostr.info",
             "wss://nostr-pub.semisol.dev",
+            "wss://freedom-relay.herokuapp.com/ws",
         ];
 
         let relay_pool = Arc::new(Mutex::new(RelayPool::new(relays, event_tx)));
@@ -148,14 +145,12 @@ fn main() {
             .manage(pool)
             .manage(relay_pool)
             .manage(bcast_tx)
-            .manage(shutdown_msg_sub_tx)
             .manage(PostrState(RwLock::new(InnerState {
                 privkey: "".to_string(),
                 pubkey: "".to_string(),
             })))
             .invoke_handler(tauri::generate_handler![
                 set_privkey,
-                get_privkey,
                 user_profile,
                 user_dms,
                 user_convos,
@@ -166,9 +161,7 @@ fn main() {
                 set_user_info,
                 get_relays,
                 set_relays,
-                user_profiles,
-                fetch,
-                verify_nip05
+                user_profiles
             ])
             .run(tauri::generate_context!())
             .expect("error while running tauri application");

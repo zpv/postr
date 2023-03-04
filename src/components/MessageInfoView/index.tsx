@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { SetBooleanState } from "../../lib/types";
 import verifIcon from "../../assets/verif.png";
 import info from "../../assets/info.png";
-import { toNpub } from "../../helpers/nip19";
+import { toNpub } from "../../helpers/pubkey";
 
 interface MessageInfoViewProps {
   setShowUserInfo: SetBooleanState;
@@ -82,7 +82,7 @@ const MessageInfoView: React.FC<MessageInfoViewProps> = ({
 
               {nip05 && (
                 <p className="truncate text-2xl font-thin text-neutral-500">
-                  @{nip05.split("@")[1].toLowerCase()}
+                  @{nip05.split("@")[1]}
                 </p>
               )}
             </div>

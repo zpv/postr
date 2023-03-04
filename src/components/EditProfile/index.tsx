@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
-import { fromNpub, toNpub, toNsec } from "../../helpers/nip19";
+import { toNpub } from "../../helpers/pubkey";
 import {
   Profile,
   Profiles,
@@ -39,17 +39,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
   const [showConfigRelaysModal, setShowConfigRelaysModal] =
     useState<boolean>(false);
   const [isProfileLoaded, setIsProfileLoaded] = useState<boolean>(false);
-  const attempts = useRef(1);
+  const [attempts, setAttempts] = useState<number>(1);
   const [changesMade, setChangesMade] = useState<boolean>(false);
-  const [privkey, setPrivkey] = useState<string>("");
   const router = useRouter();
   const formRef = useRef(null);
-  const privkeyRef = useRef(null);
   const msgRef = useRef(null);
 
   useEffect(() => {
-    setPrivkey("");
-    attempts.current = 1;
     msgRef.current.innerText = "";
     if (user_profile?.failed) {
       // formRef.current[0].disabled = true;
@@ -63,7 +59,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
       // formRef.current[3].classList.add("cursor-not-allowed");
 
       msgRef.current.innerText =
-        "Unable to load profile. (no record on current relay(s) or still loading)";
+        "Unable to load profile. (still loading or relay(s) down)";
       setIsProfileLoaded(false);
     } else {
       formRef.current[0].disabled = false;
@@ -95,7 +91,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
             prev[user_profile?.pubkey] = res;
             return prev;
           });
-          // router.push("/profile");
+          router.push("/profile");
         })
         .catch((err) => {
           const default_profile: Profile = {
@@ -125,8 +121,8 @@ const EditProfile: React.FC<EditProfileProps> = ({
         router.push("/profile");
       })
       .catch((err) => {
-        msgRef.current.innerText = `(${attempts.current}) Unable to load profile. (no record on current relay(s) or still loading)`;
-        attempts.current += 1;
+        setAttempts(attempts + 1);
+        msgRef.current.innerText = `(${attempts}) Unable to load profile. (still loading or relay(s) down)`;
       });
   };
 
@@ -134,76 +130,28 @@ const EditProfile: React.FC<EditProfileProps> = ({
     e.preventDefault();
     const name = e.target[0].value;
     const about = e.target[1].value;
+    const nip05 = e.target[2].value;
     const picture = e.target[3].value;
-    let nip05 = e.target[2].value;
-
-    // if user enters a nip05 without local_part, add name as local_part
-    if (nip05) {
-      if (
-        !nip05.includes(".") ||                   // no domain
-        nip05[0] === "." ||                       // starts with dot
-        nip05[nip05.length - 1] === "." ||        // ends with dot
-        (nip05.includes("@") && 
-          (!nip05.split("@")[1].includes(".") ||  // no domain after @
-            nip05.split("@")[1][0] === "."))      // starts with dot after @
-      ) {
-        msgRef.current.innerText = "Error: Invalid NIP-05 domain";
-        return;
-      }
-
-      if (!nip05.includes("@")) {
-        nip05 = `${name}@${nip05}`;
-        e.target[2].value = nip05;
-      } else if (nip05.includes("@") && nip05.split("@")[0] === "") {
-        nip05 = `${name}@${nip05.split("@")[1]}`;
-        e.target[2].value = nip05;
-      }
-    }
-
     const data = {
       name,
       about,
       nip05,
       picture,
     };
-
-    if (!nip05) {
-      invoke("set_user_info", { ...data }).then((res) => {
-        setProfiles((prev: Profiles) => {
-          prev[user_profile?.pubkey] = { ...user_profile, ...data };
-          return prev;
-        });
-        router.push("/profile");
-        // msgRef.current.innerText = "Profile updated!";
-        setChangesMade(false);
+    invoke("set_user_info", { ...data }).then((res) => {
+      setProfiles((prev: Profiles) => {
+        prev[user_profile?.pubkey] = { ...user_profile, ...data };
+        return prev;
       });
-    } else {
-      invoke("verify_nip05", { nip05, pubkey: user_profile.pubkey, name })
-        .then((success) => {
-          invoke("set_user_info", { ...data }).then((res) => {
-            setProfiles((prev: Profiles) => {
-              prev[user_profile?.pubkey] = { ...user_profile, ...data };
-              return prev;
-            });
-            router.push("/profile");
-            // msgRef.current.innerText = "Profile updated!";
-            setChangesMade(false);
-          });
-        })
-        .catch((err) => {
-          msgRef.current.innerText = "Error: " + err;
-        });
-    }
-  };
-
-  const handleShowPrivKey = () => {
-    invoke("get_privkey").then((res: string) => {
-      setPrivkey(res);
+      router.push("/profile");
+      // msgRef.current.innerText = "Profile updated!";
+      setChangesMade(false);
     });
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = (e) => {
+    e.preventDefault();
+    navigator.clipboard.writeText(toNpub(user_profile?.pubkey));
   };
 
   return (
@@ -291,7 +239,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
                 Retry
               </button>
             )}
-            <p className="mx-3 mt-1" ref={msgRef}></p>
+            <p className="mx-3" ref={msgRef}></p>
             <button
               type="submit"
               className={
@@ -313,7 +261,7 @@ const EditProfile: React.FC<EditProfileProps> = ({
         <div>
           <div className="rounded-xl bg-neutral-800 bg-opacity-50 px-4 pt-3 pb-5">
             <h2>Public key:</h2>
-            <div className="mb-5 flex items-center">
+            <div className="flex items-center">
               <input
                 type="text"
                 value={toNpub(user_profile?.pubkey) || ""}
@@ -321,43 +269,13 @@ const EditProfile: React.FC<EditProfileProps> = ({
                 readOnly
               />
               <button
-                onClick={() => copyToClipboard(toNpub(user_profile?.pubkey))}
-                className="ml-1 rounded-sm bg-neutral-800 px-3 py-1 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
-              >
-                Copy
-              </button>
-            </div>
-
-            <h2>Private key:</h2>
-            <div className="flex items-center">
-              <input
-                type="text"
-                className={style + " cursor-pointer"}
-                value={toNsec(privkey) || "Click to reveal..."}
-                onClick={handleShowPrivKey}
-                readOnly
-                ref={privkeyRef}
-                onBlur={() => {
-                  setPrivkey("");
-                }}
-              />
-              <button
-                onClick={() => {
-                  if (privkey) {
-                    copyToClipboard(toNsec(privkey));
-                  } else {
-                    invoke("get_privkey").then((privkey: string) => {
-                      copyToClipboard(toNsec(privkey));
-                    });
-                  }
-                }}
+                onClick={copyToClipboard}
                 className="ml-1 rounded-sm bg-neutral-800 px-3 py-1 font-medium text-white transition duration-100 hover:bg-indigo-800 active:bg-opacity-70"
               >
                 Copy
               </button>
             </div>
           </div>
-
           <div className="my-2">
             <button
               className="mr-2 mb-2 rounded-sm border border-indigo-800 border-opacity-0 bg-indigo-800 px-4 py-2  font-medium text-white hover:bg-opacity-70 active:bg-opacity-40"

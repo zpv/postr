@@ -74,7 +74,7 @@ const MessageBody: React.FC<MessageBodyProps> = ({
         console.log("fetching more");
         isFetching = true;
         setCurrentScroll(element.scrollHeight);
-        invoke<SingleMessage[]>("user_dms", {
+        invoke("user_dms", {
           peer,
           until: until,
           limit: 40,
@@ -97,9 +97,6 @@ const MessageBody: React.FC<MessageBodyProps> = ({
             return [...r, ...prev];
           });
           // }, 5000);
-        }).catch((e) => {
-          console.log(e);
-          setLoadedMore(false);
         });
       }
     };

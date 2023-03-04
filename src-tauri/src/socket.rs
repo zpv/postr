@@ -1,7 +1,6 @@
 extern crate tokio;
 extern crate websocket;
 
-use crate::cmd::verify_nip05;
 use crate::error::{Error, Result};
 use crate::event::Event;
 use crate::event::EventResp;
@@ -228,13 +227,13 @@ impl RelaySocket {
                         // send tx message to relay
                         send_msg = rx.recv() => {
                             if let Ok(msg) = send_msg {
-                                // info!("Sending message to {:?}: {:?}", relay, msg);
+                                info!("Sending message to {:?}: {:?}", relay, msg);
                                 let msg = Message::Text(msg.to_string());
                                 write.send(msg).await.unwrap();
                             }
                         }
                         msg = read.next() => {
-                            // debug!("Received message from {}: {:?}", relay, msg);
+                            debug!("Received message from {}: {:?}", relay, msg);
                             let msg = match msg {
                                 Some(Ok(msg)) => msg,
                                 Some(Err(e)) => {
@@ -260,37 +259,6 @@ impl RelaySocket {
                                                 Ok(mut e) => {
                                                     let id_prefix: String = e.id.chars().take(8).collect();
                                                     e.seen_by = vec![relay.clone()];
-
-                                                    // if event is metadata (kind = 0), verify nip05 if present
-                                                    if e.kind == 0 {
-                                                        let json = serde_json::from_str::<serde_json::Value>(&e.content).unwrap();
-                                                        match json["nip05"].as_str() {
-                                                            Some("") => {
-                                                                debug!("empty nip05 for event: {:?}", id_prefix);
-                                                            },
-                                                            Some(nip05) => {
-                                                                match json["name"].as_str() {
-                                                                    Some(name) => {
-                                                                        let pubkey = e.clone().pubkey;
-                                                                        match verify_nip05(nip05.to_string(), pubkey, name.to_string()).await {
-                                                                            Ok(_) => {
-                                                                                debug!("verified nip05 for event: {:?}", id_prefix);
-                                                                            },
-                                                                            Err(err) => {
-                                                                                error!("failed to verify nip05 for event: {:?}  error: {:?} for nip05: {:?} with name: {:?}", id_prefix, err, nip05, name);
-                                                                                let mut json = serde_json::from_str::<serde_json::Value>(&e.content).unwrap();
-                                                                                json["nip05"] = serde_json::Value::String("".to_string());
-                                                                                e.content = json.to_string();
-                                                                            }
-                                                                        }
-                                                                    },
-                                                                    None => {}
-                                                                }
-                                                            },
-                                                            None => {}
-                                                        }
-                                                    }
-
                                                     debug!(
                                                             "successfully parsed/validated event: {:?} relay: {:?}",
                                                             id_prefix, &relay

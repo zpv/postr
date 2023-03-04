@@ -1,25 +1,23 @@
 import { sha256 } from "@noble/hashes/sha256";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import LoadingWheel from "../components/LoadingWheel";
-import { randomPubkey } from "../helpers/nip19";
+import { useState } from "react";
+import { Profile } from "../lib/types";
+
+const relayUrls: string[] = [
+  "wss://nostr-pub.wellorder.net",
+  "wss://nostr-relay.untethr.me",
+];
 
 function App({ listenFunc, setListenFunc }) {
   const [privkey, setPrivkey] = useState<string>("");
-  const router = useRouter();
-  const debugPage = false;
 
-  useEffect(() => {
-    if (debugPage) return;
-    invoke("set_privkey", { privkey: randomPubkey() }).then(() => {
-      setListenFunc(invoke("sub_to_msg_events"));
-    });
-    router.push("/messages");
-  }, []);
+  const router = useRouter();
 
   const launchApp = async (privkey: string) => {
     await invoke("set_privkey", { privkey });
+
+    // invoke("sub_to_msg_events");
     setListenFunc(invoke("sub_to_msg_events"));
 
     router.push("/messages");
@@ -28,7 +26,7 @@ function App({ listenFunc, setListenFunc }) {
   const default_privkey: string =
     "bb13681e0cd2f86d6a8d124fe051abf8a8a250a6d7357cb6b6e67a8640203ece";
 
-  return debugPage ? (
+  return (
     <div className="h-[100vh] w-full bg-neutral-900">
       <h1 className="flex justify-center bg-neutral-800 pt-2 text-4xl">
         debug menu
@@ -78,10 +76,9 @@ function App({ listenFunc, setListenFunc }) {
           Launch with random private key
         </h2>
       </div>
-    </div>
-  ) : (
-    <div className="my-auto flex h-[100vh] w-full justify-center bg-neutral-900">
-      <LoadingWheel />
+
+      {/* <button onClick={greet}>test greet</button>
+    <p>{JSON.stringify(greetMsg)}</p> */}
     </div>
   );
 }

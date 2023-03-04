@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import { StrictMode } from "react";
 import EditProfileLayout from "../../layouts/EditProfileLayout";
 import Layout from "../../layouts/Layout";
 import { Profile } from "../../lib/types";
@@ -48,25 +47,23 @@ function EditProfile({
   }
 
   return (
-    <StrictMode>
-      <div className="h-full w-full overflow-hidden bg-neutral-900">
-        <div className="grid h-full grid-cols-[75px_1fr] sm:grid-cols-[180px_1fr]">
-          <Layout {...{ user_profile }} {...{ tab }}>
-            <EditProfileLayout
-              {...{
-                user_profile,
-                setProfiles,
-                setLastRefresh,
-                setPeer,
-                setMessageList,
-                listenFunc,
-                setListenFunc,
-              }}
-            />
-          </Layout>
-        </div>
+    <div className="h-full w-full overflow-hidden bg-neutral-900">
+      <div className="grid h-full grid-cols-[75px_1fr] sm:grid-cols-[180px_1fr]">
+        <Layout {...{ user_profile }} {...{ tab }}>
+          <EditProfileLayout
+            {...{
+              user_profile,
+              setProfiles,
+              setLastRefresh,
+              setPeer,
+              setMessageList,
+              listenFunc,
+              setListenFunc,
+            }}
+          />
+        </Layout>
       </div>
-    </StrictMode>
+    </div>
   );
 }
 
